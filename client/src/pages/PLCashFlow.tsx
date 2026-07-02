@@ -61,7 +61,7 @@ interface DailyCashFlow {
 
 export default function PLCashFlow() {
   const { formatCurrency, symbol: currencySymbol } = useCurrency();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
@@ -424,6 +424,21 @@ export default function PLCashFlow() {
   };
 
   const selectedDatePOs = selectedDate ? getPOsForDate(selectedDate) : [];
+
+  // Auto-open the PO details dialog for a specific date (e.g. deep link from Calendar)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const apDate = params.get('apDate');
+    if (apDate && !isLoading) {
+      const parsedDate = new Date(`${apDate}T00:00:00`);
+      if (!isNaN(parsedDate.getTime())) {
+        setSelectedMonth(parsedDate);
+        setSelectedDate(parsedDate);
+        setIsPODetailsDialogOpen(true);
+      }
+      window.history.replaceState({}, '', location.split('?')[0]);
+    }
+  }, [isLoading]);
 
   return (
     <div className="min-h-screen p-6 space-y-6">
