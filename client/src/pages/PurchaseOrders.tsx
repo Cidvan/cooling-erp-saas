@@ -269,13 +269,12 @@ export default function PurchaseOrders() {
   const grandTotal = subtotal - discountAmount;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
+    <div className="min-h-screen p-6 space-y-6">
       {/* Header */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold text-center">Purchase Orders</CardTitle>
-        </CardHeader>
-      </Card>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Purchase Orders</h1>
+        <p className="text-muted-foreground mt-1">Create and manage supplier purchase orders</p>
+      </div>
 
       <div className="grid grid-cols-1 gap-6">
         {/* Main Form */}
@@ -366,7 +365,7 @@ export default function PurchaseOrders() {
               <h3 className="text-lg font-semibold text-primary">Items Details</h3>
               
               {/* Add Item Inputs */}
-              <Card className="bg-blue-50">
+              <Card className="bg-primary/5">
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
                     <div>
@@ -467,7 +466,7 @@ export default function PurchaseOrders() {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-primary">Summary</h3>
               
-              <div className="bg-blue-50 rounded-lg p-4 space-y-3">
+              <div className="bg-primary/5 rounded-lg p-4 space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Total Number of Units:</span>
                   <span className="font-bold text-lg" data-testid="text-total-units">{totalUnits}</span>
@@ -592,7 +591,7 @@ export default function PurchaseOrders() {
                           ₱{parseFloat(po.grandTotal).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </TableCell>
                         <TableCell data-testid={`text-status-${po.id}`}>
-                          <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                          <span className="px-2 py-1 rounded-full text-xs bg-primary/10 text-primary">
                             {po.status}
                           </span>
                         </TableCell>

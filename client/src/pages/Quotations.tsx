@@ -328,7 +328,7 @@ export default function Quotations() {
       case 'sent': 
         return { 
           variant: 'default' as const, 
-          className: 'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30 border-blue-200 dark:border-blue-800'
+          className: 'bg-primary/10 text-primary hover:bg-primary/15 dark:bg-primary/15 dark:text-primary border-transparent'
         };
       case 'accepted': 
         return { 

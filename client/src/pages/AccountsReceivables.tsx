@@ -342,10 +342,9 @@ export default function AccountsReceivables() {
     .reduce((sum, ar) => sum + parseFloat(ar.balance.toString()), 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
+    <div className="min-h-screen p-6 space-y-6">
       {/* Header */}
-      <Card className="mb-6">
-        <CardHeader className="flex flex-row items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -355,7 +354,10 @@ export default function AccountsReceivables() {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <CardTitle className="text-3xl font-bold">Accounts Receivables</CardTitle>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Accounts Receivables</h1>
+              <p className="text-muted-foreground mt-1">Track and manage client receivables</p>
+            </div>
           </div>
 
           <Button onClick={handleCreateNew} data-testid="button-create-ar">
@@ -732,8 +734,7 @@ export default function AccountsReceivables() {
               </Form>
             </DialogContent>
           </Dialog>
-        </CardHeader>
-      </Card>
+      </div>
 
       {/* View Payments Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
@@ -870,7 +871,7 @@ export default function AccountsReceivables() {
                         ar.status === 'paid' 
                           ? 'bg-green-100 text-green-700' 
                           : ar.status === 'waived'
-                          ? 'bg-blue-100 text-blue-700'
+                          ? 'bg-primary/10 text-primary'
                           : 'bg-yellow-100 text-yellow-700'
                       }`}>
                         {ar.status}

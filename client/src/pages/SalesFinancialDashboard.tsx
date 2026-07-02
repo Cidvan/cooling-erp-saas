@@ -168,13 +168,12 @@ export default function SalesFinancialDashboard() {
   }, [dateInterval, salesEntries, accountsReceivables, operationalExpenses]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
+    <div className="min-h-screen p-6 space-y-6">
       {/* Header */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold text-center">Sales & Financial Dashboard</CardTitle>
-        </CardHeader>
-      </Card>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Sales & Financial Dashboard</h1>
+        <p className="text-muted-foreground mt-1">Overview of revenue, receivables, and payables</p>
+      </div>
 
       {/* Month Range Filter */}
       <Card className="mb-6">
@@ -272,7 +271,7 @@ export default function SalesFinancialDashboard() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">Credit Sales (AR)</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600" data-testid="text-credit-sales">
+                <div className="text-2xl font-bold text-primary" data-testid="text-credit-sales">
                   {isLoading ? 'Loading...' : `₱${metrics.totalCreditSales.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">AR records created</p>

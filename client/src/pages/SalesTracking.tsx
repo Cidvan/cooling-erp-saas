@@ -101,20 +101,21 @@ export default function SalesTracking() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
-      <Card className="mb-6">
-        <CardHeader className="flex flex-row items-center gap-4 flex-wrap">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setLocation('/sales-financial')}
-            data-testid="button-back"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <CardTitle className="text-3xl font-bold">Sales Tracking</CardTitle>
-        </CardHeader>
-      </Card>
+    <div className="min-h-screen p-6 space-y-6">
+      <div className="flex items-center gap-4 flex-wrap">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setLocation('/sales-financial')}
+          data-testid="button-back"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Sales Tracking</h1>
+          <p className="text-muted-foreground mt-1">Monitor sales entries and invoices</p>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card data-testid="card-total-invoiced">
@@ -204,7 +205,7 @@ export default function SalesTracking() {
                     <Badge
                       variant="outline"
                       className={
-                        sale.type === 'AR (Credit)' ? 'border-blue-300 text-blue-700' :
+                        sale.type === 'AR (Credit)' ? 'border-primary/30 text-primary' :
                         sale.type === 'Cash Sale' ? 'border-green-300 text-green-700' :
                         sale.type === 'Invoice' ? 'border-purple-300 text-purple-700' :
                         'border-gray-300 text-gray-700'

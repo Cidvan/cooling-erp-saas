@@ -424,21 +424,22 @@ export default function PLCashFlow() {
   const selectedDatePOs = selectedDate ? getPOsForDate(selectedDate) : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
+    <div className="min-h-screen p-6 space-y-6">
       {/* Header */}
-      <Card className="mb-6">
-        <CardHeader className="flex flex-row items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setLocation('/sales-financial')}
-            data-testid="button-back"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <CardTitle className="text-3xl font-bold">Cash Flow</CardTitle>
-        </CardHeader>
-      </Card>
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setLocation('/sales-financial')}
+          data-testid="button-back"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Cash Flow</h1>
+          <p className="text-muted-foreground mt-1">Daily cash flow and payables overview</p>
+        </div>
+      </div>
 
       {/* Filter Bar */}
       <Card className="mb-6">
@@ -862,7 +863,7 @@ export default function PLCashFlow() {
                   ))}
 
                   {/* Monthly Summary Row */}
-                  <TableRow className="bg-blue-50 font-bold border-t-2 border-blue-200">
+                  <TableRow className="bg-primary/5 font-bold border-t-2 border-primary/20">
                     <TableCell colSpan={2} className="text-lg">
                       Monthly Total
                     </TableCell>
