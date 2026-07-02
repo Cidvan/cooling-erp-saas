@@ -25,6 +25,9 @@ import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
 import PlaceholderPage from "@/pages/PlaceholderPage";
 import SuperAdminCompanies from "@/pages/SuperAdminCompanies";
+import NotificationCenter from "@/pages/NotificationCenter";
+import ActivityFeed from "@/pages/ActivityFeed";
+import AuditTrail from "@/pages/AuditTrail";
 import NotFound from "@/pages/not-found";
 import { useEffect } from "react";
 
@@ -32,6 +35,15 @@ import { useEffect } from "react";
 function FinanceRoute({ component: Component }: { component: React.ComponentType }) {
   const { user } = useAuth();
   if (user?.role === "ojt") {
+    return <Redirect to="/dashboard" />;
+  }
+  return <Component />;
+}
+
+// Guard component: only owner/admin users may access the Audit Trail
+function AdminRoute({ component: Component }: { component: React.ComponentType }) {
+  const { user } = useAuth();
+  if (user?.role !== "owner" && user?.role !== "admin") {
     return <Redirect to="/dashboard" />;
   }
   return <Component />;
@@ -76,6 +88,11 @@ function ProtectedRoutes() {
         <FinanceRoute component={PurchaseOrders} />
       </Route>
       <Route path="/documents" component={Documents} />
+      <Route path="/notifications" component={NotificationCenter} />
+      <Route path="/activity-feed" component={ActivityFeed} />
+      <Route path="/audit-trail">
+        <AdminRoute component={AuditTrail} />
+      </Route>
       <Route path="/settings" component={Settings} />
       <Route path="/profile" component={Profile} />
       <Route path="/admin/companies">

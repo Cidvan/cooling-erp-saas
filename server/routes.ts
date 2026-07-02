@@ -4,6 +4,36 @@ import { storage } from "./storage";
 import { insertClientSchema, insertServiceReportSchema, insertServiceLineItemSchema, insertQuotationSchema, insertQuotationLineItemSchema, insertInvoiceSchema, insertInvoiceLineItemSchema, insertAccountsReceivableSchema, insertOperationalExpenseSchema, insertSalesEntrySchema, insertPurchaseOrderSchema, insertPurchaseOrderItemSchema, insertAccountsPayableSchema, updateUserProfileSchema, updatePasswordSchema, insertNotificationSchema, insertCompanySchema, insertCompanySettingsSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 
+// Extracts client IP and browser/device info from the request headers for the Audit Trail
+function getRequestContext(req?: any): { ipAddress?: string; userAgent?: string } {
+  if (!req) return {};
+  const forwardedFor = req.headers?.['x-forwarded-for'];
+  const ipAddress = (typeof forwardedFor === 'string' ? forwardedFor.split(',')[0].trim() : undefined)
+    || req.socket?.remoteAddress
+    || req.ip
+    || undefined;
+  const userAgent = req.headers?.['user-agent'] || undefined;
+  return { ipAddress, userAgent };
+}
+
+// Builds a compact before/after diff of only the fields that changed, for the Audit Trail
+function diffChangedFields(previous: Record<string, any> | undefined, next: Record<string, any> | undefined): { previousValue?: string; newValue?: string } {
+  if (!previous || !next) return {};
+  const before: Record<string, any> = {};
+  const after: Record<string, any> = {};
+  for (const key of Object.keys(next)) {
+    if (key === 'dateCreated' || key === 'lastModified' || key === 'id' || key === 'companyId') continue;
+    const prevVal = previous[key];
+    const nextVal = next[key];
+    if (JSON.stringify(prevVal) !== JSON.stringify(nextVal)) {
+      before[key] = prevVal;
+      after[key] = nextVal;
+    }
+  }
+  if (Object.keys(after).length === 0) return {};
+  return { previousValue: JSON.stringify(before), newValue: JSON.stringify(after) };
+}
+
 // Helper function to log activities
 // Uses session user data when available, falls back to 'system' for automated processes
 async function logActivity(
@@ -14,9 +44,13 @@ async function logActivity(
   entityName: string,
   description: string,
   userId?: string,
-  userName?: string
+  userName?: string,
+  req?: any,
+  changes?: { previous?: Record<string, any>; next?: Record<string, any> }
 ) {
   try {
+    const { ipAddress, userAgent } = getRequestContext(req);
+    const { previousValue, newValue } = diffChangedFields(changes?.previous, changes?.next);
     await storage.createActivityLog(companyId, {
       userId: userId || 'system',
       userName: userName || 'System',
@@ -25,6 +59,10 @@ async function logActivity(
       entityId,
       entityName,
       description,
+      ipAddress,
+      userAgent,
+      previousValue,
+      newValue,
     });
   } catch (error) {
     console.error('Failed to log activity:', error);
@@ -276,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!updated) {
         return res.status(404).json({ error: "Company not found" });
       }
-      await logActivity(companyId, 'updated', 'company', updated.id, updated.name, 'Updated company business info', req.session.userId, req.session.userName);
+      await logActivity(companyId, 'updated', 'company', updated.id, updated.name, 'Updated company business info', req.session.userId, req.session.userName, req);
       res.json(updated);
     } catch (error) {
       res.status(400).json({ error: "Invalid company data", details: error });
@@ -299,7 +337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const companyId = req.session.companyId!;
       const validatedData = insertCompanySettingsSchema.partial().parse(req.body);
       const settings = await storage.updateCompanySettings(companyId, validatedData);
-      await logActivity(companyId, 'updated', 'company_settings', settings.id, 'Company Settings', 'Updated company settings', req.session.userId, req.session.userName);
+      await logActivity(companyId, 'updated', 'company_settings', settings.id, 'Company Settings', 'Updated company settings', req.session.userId, req.session.userName, req);
       res.json(settings);
     } catch (error) {
       res.status(400).json({ error: "Invalid settings data", details: error });
@@ -408,7 +446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const companyId = req.session.companyId!;
       const validatedData = insertClientSchema.parse(req.body);
       const client = await storage.createClient(companyId, validatedData);
-      await logActivity(companyId, 'created', 'client', client.id, client.name, `Created client: ${client.name}`, req.session.userId, req.session.userName);
+      await logActivity(companyId, 'created', 'client', client.id, client.name, `Created client: ${client.name}`, req.session.userId, req.session.userName, req);
       res.status(201).json(client);
     } catch (error) {
       res.status(400).json({ error: "Invalid client data", details: error });
@@ -418,12 +456,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/clients/:id", async (req, res) => {
     try {
       const companyId = req.session.companyId!;
+      const originalClient = await storage.getClient(req.params.id, companyId);
       const validatedData = insertClientSchema.partial().parse(req.body);
       const client = await storage.updateClient(req.params.id, companyId, validatedData);
       if (!client) {
         return res.status(404).json({ error: "Client not found" });
       }
-      await logActivity(companyId, 'updated', 'client', client.id, client.name, `Updated client: ${client.name}`, req.session.userId, req.session.userName);
+      await logActivity(companyId, 'updated', 'client', client.id, client.name, `Updated client: ${client.name}`, req.session.userId, req.session.userName, req, { previous: originalClient, next: client });
       res.json(client);
     } catch (error) {
       res.status(400).json({ error: "Invalid client data", details: error });
@@ -467,7 +506,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!deleted) {
         return res.status(404).json({ error: "Client not found" });
       }
-      await logActivity(companyId, 'deleted', 'client', client.id, client.name, `Deleted client: ${client.name} (and all related records)`, req.session.userId, req.session.userName);
+      await logActivity(companyId, 'deleted', 'client', client.id, client.name, `Deleted client: ${client.name} (and all related records)`, req.session.userId, req.session.userName, req);
       res.status(204).send();
     } catch (error) {
       console.error("[client] Error deleting client:", error);
@@ -526,7 +565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate service report data
       const validatedReport = insertServiceReportSchema.parse(reportData);
       const report = await storage.createServiceReport(companyId, validatedReport);
-      await logActivity(companyId, 'created', 'service_report', report.id, report.reportNumber, `Created service report: ${report.reportNumber}`, req.session.userId, req.session.userName);
+      await logActivity(companyId, 'created', 'service_report', report.id, report.reportNumber, `Created service report: ${report.reportNumber}`, req.session.userId, req.session.userName, req);
       await syncClientLastCleaning(report.clientId, companyId);
       
       const createdLineItems = [];
@@ -587,7 +626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               remarks: `Service Report ${report.reportNumber}`,
             });
             const salesEntry = await storage.createSalesEntry(companyId, salesEntryData);
-            await logActivity(companyId, 'created', 'sales_entry', salesEntry.id, `₱${salesEntry.amount}`, `SR completed: ${report.reportNumber}`, req.session.userId, req.session.userName);
+            await logActivity(companyId, 'created', 'sales_entry', salesEntry.id, `₱${salesEntry.amount}`, `SR completed: ${report.reportNumber}`, req.session.userId, req.session.userName, req);
           }
         }
       }
@@ -621,6 +660,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const companyId = req.session.companyId!;
       const { lineItems, technicians, acUnits, ...reportData } = req.body;
 
+      const originalReport = await storage.getServiceReport(req.params.id, companyId);
       const validatedReport = insertServiceReportSchema.partial().parse(reportData);
       const report = await storage.updateServiceReport(req.params.id, companyId, validatedReport);
 
@@ -685,7 +725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             remarks: `Service Report ${report.reportNumber}`,
           });
           const salesEntry = await storage.createSalesEntry(companyId, salesEntryData);
-          await logActivity(companyId, 'created', 'sales_entry', salesEntry.id, `₱${salesEntry.amount}`, `SR completed: ${report.reportNumber}`, req.session.userId, req.session.userName);
+          await logActivity(companyId, 'created', 'sales_entry', salesEntry.id, `₱${salesEntry.amount}`, `SR completed: ${report.reportNumber}`, req.session.userId, req.session.userName, req);
         } else {
           // Update amount in case line items changed
           await storage.updateSalesEntry(existingSalesEntries[0].id, companyId, { amount: total.toFixed(2) });
@@ -697,16 +737,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const userName = req.session.userName || "System";
-      const userId = req.session.userId || "system";
-      await storage.createActivityLog(companyId, {
-        userId, userName,
-        activityType: "updated",
-        entityType: "service_report",
-        entityId: report.id,
-        entityName: report.reportNumber,
-        description: `Updated service report ${report.reportNumber}`,
-      });
+      await logActivity(companyId, 'updated', 'service_report', report.id, report.reportNumber, `Updated service report ${report.reportNumber}`, req.session.userId, req.session.userName, req, { previous: originalReport, next: report });
+
+      // Notify owners/admins when a service report transitions to completed
+      if (originalReport?.status?.toLowerCase() !== 'completed' && report.status?.toLowerCase() === 'completed') {
+        await storage.notifyCompanyUsers(companyId, {
+          type: 'service_report_completed',
+          category: 'service',
+          title: 'Service Report Completed',
+          message: `Service report ${report.reportNumber} was marked completed`,
+          relatedId: report.id,
+          relatedType: 'service_report',
+          isRead: false,
+        });
+      }
 
       res.json({ ...report, lineItems: createdLineItems, technicians: createdTechnicians, acUnits: createdAcUnits });
     } catch (error: any) {
@@ -850,7 +894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate quotation data
       const validatedQuotation = insertQuotationSchema.parse(quotationData);
       const quotation = await storage.createQuotation(companyId, validatedQuotation);
-      await logActivity(companyId, 'created', 'quotation', quotation.id, quotation.quotationNumber, `Created quotation: ${quotation.quotationNumber}`, req.session.userId, req.session.userName);
+      await logActivity(companyId, 'created', 'quotation', quotation.id, quotation.quotationNumber, `Created quotation: ${quotation.quotationNumber}`, req.session.userId, req.session.userName, req);
       
       // Validate and create line items if provided
       if (lineItems && Array.isArray(lineItems)) {
@@ -890,6 +934,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!quotation) {
         return res.status(404).json({ error: "Quotation not found" });
+      }
+
+      await logActivity(companyId, 'updated', 'quotation', quotation.id, quotation.quotationNumber, `Updated quotation: ${quotation.quotationNumber}`, req.session.userId, req.session.userName, req, { previous: oldQuotation, next: quotation });
+
+      // Notify owners/admins when a quotation is accepted
+      if (oldQuotation?.status?.toLowerCase() !== 'accepted' && quotation.status?.toLowerCase() === 'accepted') {
+        await storage.notifyCompanyUsers(companyId, {
+          type: 'quotation_accepted',
+          category: 'sales',
+          title: 'Quotation Accepted',
+          message: `Quotation ${quotation.quotationNumber} was accepted`,
+          relatedId: quotation.id,
+          relatedType: 'quotation',
+          isRead: false,
+        });
       }
 
       // Handle line items update if provided
@@ -1297,7 +1356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        await logActivity(companyId, 'created', 'accounts_receivable', ar.id, ar.arNumber, `Created accounts receivable: ${ar.arNumber}`, req.session.userId, req.session.userName);
+        await logActivity(companyId, 'created', 'accounts_receivable', ar.id, ar.arNumber, `Created accounts receivable: ${ar.arNumber}`, req.session.userId, req.session.userName, req);
         res.status(201).json(ar);
       } catch (paymentError) {
         // If payment creation fails, delete the AR to maintain consistency
@@ -1335,7 +1394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!updatedAR) {
         return res.status(404).json({ error: "Accounts receivable not found" });
       }
-      await logActivity(companyId, 'updated', 'accounts_receivable', updatedAR.id, updatedAR.arNumber, `Updated accounts receivable: ${updatedAR.arNumber}`, req.session.userId, req.session.userName);
+      await logActivity(companyId, 'updated', 'accounts_receivable', updatedAR.id, updatedAR.arNumber, `Updated accounts receivable: ${updatedAR.arNumber}`, req.session.userId, req.session.userName, req, { previous: originalAR, next: updatedAR });
 
       // Sync payments if provided
       if (payments && Array.isArray(payments)) {
@@ -1391,7 +1450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
           const validatedSalesEntry = insertSalesEntrySchema.parse(salesEntryData);
           const salesEntry = await storage.createSalesEntry(companyId, validatedSalesEntry);
-          await logActivity(companyId, 'created', 'sales_entry', salesEntry.id, `₱${salesEntry.amount}`, `AR paid: ${updatedAR.arNumber}`, req.session.userId, req.session.userName);
+          await logActivity(companyId, 'created', 'sales_entry', salesEntry.id, `₱${salesEntry.amount}`, `AR paid: ${updatedAR.arNumber}`, req.session.userId, req.session.userName, req);
         }
       } else if (wasAlreadyPaid && !isNowPaid) {
         // AR un-paid — remove the auto-created sales entry
@@ -1417,7 +1476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Accounts receivable not found" });
       }
       if (ar) {
-        await logActivity(companyId, 'deleted', 'accounts_receivable', ar.id, ar.arNumber, `Deleted accounts receivable: ${ar.arNumber}`, req.session.userId, req.session.userName);
+        await logActivity(companyId, 'deleted', 'accounts_receivable', ar.id, ar.arNumber, `Deleted accounts receivable: ${ar.arNumber}`, req.session.userId, req.session.userName, req);
       }
       res.status(204).send();
     } catch (error) {
@@ -1452,7 +1511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const companyId = req.session.companyId!;
       const validatedData = insertOperationalExpenseSchema.parse(req.body);
       const expense = await storage.createOperationalExpense(companyId, validatedData);
-      await logActivity(companyId, 'created', 'operational_expense', expense.id, expense.category, `Created expense: ₱${expense.amount} for ${expense.category}`, req.session.userId, req.session.userName);
+      await logActivity(companyId, 'created', 'operational_expense', expense.id, expense.category, `Created expense: ₱${expense.amount} for ${expense.category}`, req.session.userId, req.session.userName, req);
       res.status(201).json(expense);
     } catch (error) {
       res.status(400).json({ error: "Failed to create operational expense", details: error });
@@ -1462,11 +1521,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/operational-expenses/:id", async (req, res) => {
     try {
       const companyId = req.session.companyId!;
+      const originalExpense = await storage.getOperationalExpense(req.params.id, companyId);
       const updatedExpense = await storage.updateOperationalExpense(req.params.id, companyId, req.body);
       if (!updatedExpense) {
         return res.status(404).json({ error: "Operational expense not found" });
       }
-      await logActivity(companyId, 'updated', 'operational_expense', updatedExpense.id, updatedExpense.category, `Updated expense: ₱${updatedExpense.amount} for ${updatedExpense.category}`, req.session.userId, req.session.userName);
+      await logActivity(companyId, 'updated', 'operational_expense', updatedExpense.id, updatedExpense.category, `Updated expense: ₱${updatedExpense.amount} for ${updatedExpense.category}`, req.session.userId, req.session.userName, req, { previous: originalExpense, next: updatedExpense });
       res.json(updatedExpense);
     } catch (error) {
       res.status(400).json({ error: "Failed to update operational expense", details: error });
@@ -1482,7 +1542,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Operational expense not found" });
       }
       if (expense) {
-        await logActivity(companyId, 'deleted', 'operational_expense', expense.id, expense.category, `Deleted expense: ₱${expense.amount} for ${expense.category}`, req.session.userId, req.session.userName);
+        await logActivity(companyId, 'deleted', 'operational_expense', expense.id, expense.category, `Deleted expense: ₱${expense.amount} for ${expense.category}`, req.session.userId, req.session.userName, req);
       }
       res.status(204).send();
     } catch (error) {
@@ -1517,7 +1577,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const companyId = req.session.companyId!;
       const validatedData = insertSalesEntrySchema.parse(req.body);
       const entry = await storage.createSalesEntry(companyId, validatedData);
-      await logActivity(companyId, 'created', 'sales_entry', entry.id, `₱${entry.amount}`, `Created sales entry: ₱${entry.amount} via ${entry.paymentMethod}`, req.session.userId, req.session.userName);
+      await logActivity(companyId, 'created', 'sales_entry', entry.id, `₱${entry.amount}`, `Created sales entry: ₱${entry.amount} via ${entry.paymentMethod}`, req.session.userId, req.session.userName, req);
       res.status(201).json(entry);
     } catch (error) {
       res.status(400).json({ error: "Failed to create sales entry", details: error });
@@ -1527,11 +1587,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/sales-entries/:id", async (req, res) => {
     try {
       const companyId = req.session.companyId!;
+      const originalEntry = await storage.getSalesEntry(req.params.id, companyId);
       const updatedEntry = await storage.updateSalesEntry(req.params.id, companyId, req.body);
       if (!updatedEntry) {
         return res.status(404).json({ error: "Sales entry not found" });
       }
-      await logActivity(companyId, 'updated', 'sales_entry', updatedEntry.id, `₱${updatedEntry.amount}`, `Updated sales entry: ₱${updatedEntry.amount} via ${updatedEntry.paymentMethod}`, req.session.userId, req.session.userName);
+      await logActivity(companyId, 'updated', 'sales_entry', updatedEntry.id, `₱${updatedEntry.amount}`, `Updated sales entry: ₱${updatedEntry.amount} via ${updatedEntry.paymentMethod}`, req.session.userId, req.session.userName, req, { previous: originalEntry, next: updatedEntry });
       res.json(updatedEntry);
     } catch (error) {
       res.status(400).json({ error: "Failed to update sales entry", details: error });
@@ -1547,7 +1608,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Sales entry not found" });
       }
       if (entry) {
-        await logActivity(companyId, 'deleted', 'sales_entry', entry.id, `₱${entry.amount}`, `Deleted sales entry: ₱${entry.amount} via ${entry.paymentMethod}`, req.session.userId, req.session.userName);
+        await logActivity(companyId, 'deleted', 'sales_entry', entry.id, `₱${entry.amount}`, `Deleted sales entry: ₱${entry.amount} via ${entry.paymentMethod}`, req.session.userId, req.session.userName, req);
       }
       res.status(204).send();
     } catch (error) {
@@ -1595,7 +1656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate purchase order data
       const validatedPO = insertPurchaseOrderSchema.parse(poData);
       const po = await storage.createPurchaseOrder(companyId, validatedPO);
-      await logActivity(companyId, 'created', 'purchase_order', po.id, po.poNumber, `Created purchase order: ${po.poNumber} for ${po.supplierName}`, req.session.userId, req.session.userName);
+      await logActivity(companyId, 'created', 'purchase_order', po.id, po.poNumber, `Created purchase order: ${po.poNumber} for ${po.supplierName}`, req.session.userId, req.session.userName, req);
       
       // Validate and create items if provided
       if (items && Array.isArray(items)) {
@@ -1641,7 +1702,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           const validatedExpense = insertOperationalExpenseSchema.parse(expenseData);
           const expense = await storage.createOperationalExpense(companyId, validatedExpense);
-          await logActivity(companyId, 'created', 'operational_expense', expense.id, `₱${expense.amount}`, `Created expense from PO: ${po.poNumber}`, req.session.userId, req.session.userName);
+          await logActivity(companyId, 'created', 'operational_expense', expense.id, `₱${expense.amount}`, `Created expense from PO: ${po.poNumber}`, req.session.userId, req.session.userName, req);
         }
         
         // Return PO with items
@@ -1670,7 +1731,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!updatedPO) {
         return res.status(404).json({ error: "Purchase order not found" });
       }
-      await logActivity(companyId, 'updated', 'purchase_order', updatedPO.id, updatedPO.poNumber, `Updated purchase order: ${updatedPO.poNumber}`, req.session.userId, req.session.userName);
+      await logActivity(companyId, 'updated', 'purchase_order', updatedPO.id, updatedPO.poNumber, `Updated purchase order: ${updatedPO.poNumber}`, req.session.userId, req.session.userName, req, { previous: originalPO, next: updatedPO });
+
+      // Notify owners/admins when a PO is marked paid
+      if (originalPO.paymentStatus === 'pending' && poData.paymentStatus === 'paid') {
+        await storage.notifyCompanyUsers(companyId, {
+          type: 'po_paid',
+          category: 'finance',
+          title: 'Purchase Order Paid',
+          message: `Purchase order ${updatedPO.poNumber} for ${updatedPO.supplierName} was marked paid`,
+          relatedId: updatedPO.id,
+          relatedType: 'purchase_order',
+          isRead: false,
+        });
+      }
       
       // If payment status changed from pending to paid, create an operational expense
       if (originalPO.paymentStatus === 'pending' && poData.paymentStatus === 'paid') {
@@ -1686,7 +1760,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const validatedExpense = insertOperationalExpenseSchema.parse(expenseData);
         const expense = await storage.createOperationalExpense(companyId, validatedExpense);
-        await logActivity(companyId, 'created', 'operational_expense', expense.id, `₱${expense.amount}`, `Created expense from paid PO: ${updatedPO.poNumber}`, req.session.userId, req.session.userName);
+        await logActivity(companyId, 'created', 'operational_expense', expense.id, `₱${expense.amount}`, `Created expense from paid PO: ${updatedPO.poNumber}`, req.session.userId, req.session.userName, req);
       }
       
       // Update or create linked accounts payable record
@@ -1834,7 +1908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const validatedAP = insertAccountsPayableSchema.parse(apData);
       const ap = await storage.createAccountsPayable(companyId, validatedAP);
-      await logActivity(companyId, 'created', 'accounts_payable', ap.id, ap.apNumber, `Converted PO ${po.poNumber} to AP ${ap.apNumber}`, req.session.userId, req.session.userName);
+      await logActivity(companyId, 'created', 'accounts_payable', ap.id, ap.apNumber, `Converted PO ${po.poNumber} to AP ${ap.apNumber}`, req.session.userId, req.session.userName, req);
       
       res.status(201).json(ap);
     } catch (error) {
@@ -1914,12 +1988,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!updatedAP) {
         return res.status(404).json({ error: "Accounts payable not found" });
       }
-      await logActivity(companyId, 'updated', 'accounts_payable', updatedAP.id, updatedAP.apNumber, `Updated accounts payable: ${updatedAP.apNumber}`, req.session.userId, req.session.userName);
+      await logActivity(companyId, 'updated', 'accounts_payable', updatedAP.id, updatedAP.apNumber, `Updated accounts payable: ${updatedAP.apNumber}`, req.session.userId, req.session.userName, req, { previous: originalAP, next: updatedAP });
       
       // If status changed from pending to paid OR balance decreased, create an operational expense
       const oldBalance = parseFloat(originalAP.balance);
       const newBalance = parseFloat(updatedAP.balance);
       const paymentAmount = oldBalance - newBalance;
+
+      // Notify owners/admins when an AP is marked paid
+      if (originalAP.status === 'pending' && req.body.status === 'paid') {
+        await storage.notifyCompanyUsers(companyId, {
+          type: 'ap_paid',
+          category: 'finance',
+          title: 'Accounts Payable Paid',
+          message: `Accounts payable ${updatedAP.apNumber} for ${updatedAP.supplierName} was marked paid`,
+          relatedId: updatedAP.id,
+          relatedType: 'accounts_payable',
+          isRead: false,
+        });
+      }
       
       if ((originalAP.status === 'pending' && req.body.status === 'paid') || paymentAmount > 0) {
         // Use payment amount if balance decreased, otherwise use full amount
@@ -1937,7 +2024,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const validatedExpense = insertOperationalExpenseSchema.parse(expenseData);
         const expense = await storage.createOperationalExpense(companyId, validatedExpense);
-        await logActivity(companyId, 'created', 'operational_expense', expense.id, `₱${expense.amount}`, `Created expense from AP payment: ${updatedAP.apNumber}`, req.session.userId, req.session.userName);
+        await logActivity(companyId, 'created', 'operational_expense', expense.id, `₱${expense.amount}`, `Created expense from AP payment: ${updatedAP.apNumber}`, req.session.userId, req.session.userName, req);
       }
       
       res.json(updatedAP);
@@ -2040,6 +2127,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(logs);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch activity logs" });
+    }
+  });
+
+  // Audit Trail: filterable, paginated, admin/owner only (includes IP/device/before-after diffs)
+  app.get("/api/audit-logs", requireAuth, requireCompany, requireRole("owner", "admin"), async (req, res) => {
+    try {
+      const companyId = req.session.companyId!;
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
+      const { logs, total } = await storage.getActivityLogsFiltered(companyId, {
+        userId: req.query.userId as string | undefined,
+        entityType: req.query.entityType as string | undefined,
+        startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
+        endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined,
+        page,
+        limit,
+      });
+      res.json({ logs, total, page, limit });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch audit logs" });
     }
   });
 

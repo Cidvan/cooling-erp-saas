@@ -18,7 +18,10 @@ import {
   ShoppingCart, 
   FolderOpen,
   ReceiptText,
-  Building2
+  Building2,
+  Bell,
+  Activity,
+  ShieldCheck
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/lib/auth";
@@ -76,6 +79,25 @@ const superAdminItems = [
     icon: Building2,
   },
 ];
+
+const activityItems = [
+  {
+    title: "Notifications",
+    url: "/notifications",
+    icon: Bell,
+  },
+  {
+    title: "Activity Feed",
+    url: "/activity-feed",
+    icon: Activity,
+  },
+];
+
+const auditItem = {
+  title: "Audit Trail",
+  url: "/audit-trail",
+  icon: ShieldCheck,
+};
 
 function NavGroup({ label, items, location }: { label: string; items: typeof operationsItems; location: string }) {
   return (
@@ -138,6 +160,11 @@ export function AppSidebar() {
           <>
             <NavGroup label="Operations" items={operationsItems} location={location} />
             {!isOjt && <NavGroup label="Finance" items={financeItems} location={location} />}
+            <NavGroup
+              label="Activity"
+              items={user?.role === "owner" || user?.role === "admin" ? [...activityItems, auditItem] : activityItems}
+              location={location}
+            />
           </>
         )}
       </SidebarContent>

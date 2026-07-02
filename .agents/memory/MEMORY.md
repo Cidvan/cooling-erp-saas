@@ -1,1 +1,2 @@
 - [Multi-tenant CoolDesk architecture](multi-tenant-cooldesk.md) — companyId scoping model, super_admin bootstrap script, no seeded demo users.
+- [tsx watch stale routes](tsx-watch-stale-routes.md) — newly added Express routes can silently fall through to the Vite SPA catch-all (returns HTML, not JSON) until the dev workflow is manually restarted.

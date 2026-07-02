@@ -351,6 +351,9 @@ export const notifications = pgTable("notifications", {
   // Metadata (JSON for extra data like aging days, days until birthday, etc.)
   metadata: text("metadata"), // JSON string
   
+  // Category for filtering in the Notification Center (system, sales, inventory, projects, finance, service)
+  category: text("category").notNull().default("system"),
+  
   // Status
   isRead: boolean("is_read").notNull().default(false),
   
@@ -375,6 +378,14 @@ export const activityLogs = pgTable("activity_logs", {
   
   // Additional data (JSON string)
   metadata: text("metadata"),
+  
+  // Request context captured for the Audit Trail (from request headers)
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  
+  // Before/after snapshot of changed fields for update operations (JSON string)
+  previousValue: text("previous_value"),
+  newValue: text("new_value"),
   
   // Timestamp
   timestamp: timestamp("timestamp").defaultNow(),

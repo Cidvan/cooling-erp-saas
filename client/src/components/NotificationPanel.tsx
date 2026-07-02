@@ -1,4 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -164,6 +165,14 @@ export default function NotificationPanel({ userId }: NotificationPanelProps) {
           </div>
         )}
       </ScrollArea>
+
+      <div className="p-2 border-t">
+        <Link href="/notifications">
+          <Button variant="ghost" size="sm" className="w-full" data-testid="button-view-all-notifications">
+            View all notifications
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }

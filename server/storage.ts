@@ -43,7 +43,7 @@ import {
   activityLogs,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, sql, desc, inArray } from "drizzle-orm";
+import { eq, and, sql, desc, inArray, gte, lte } from "drizzle-orm";
 
 export type DocumentType = "quotation" | "invoice" | "purchaseOrder" | "serviceReport" | "accountsReceivable" | "accountsPayable";
 
@@ -228,10 +228,21 @@ export interface IStorage {
   markAllNotificationsAsRead(userId: string, companyId: string): Promise<boolean>;
   deleteNotification(id: string): Promise<boolean>;
   generateNotifications(userId: string, companyId: string): Promise<Notification[]>;
+  notifyCompanyUsers(companyId: string, notification: Omit<InsertNotification, "userId">, roles?: string[]): Promise<Notification[]>;
   
   // Activity Log methods
   getActivityLogs(companyId: string, limit?: number): Promise<ActivityLog[]>;
+  getActivityLogsFiltered(companyId: string, filters: ActivityLogFilters): Promise<{ logs: ActivityLog[]; total: number }>;
   createActivityLog(companyId: string, log: InsertActivityLog): Promise<ActivityLog>;
+}
+
+export interface ActivityLogFilters {
+  userId?: string;
+  entityType?: string;
+  startDate?: Date;
+  endDate?: Date;
+  page?: number;
+  limit?: number;
 }
 
 export class DbStorage implements IStorage {
@@ -1244,6 +1255,20 @@ export class DbStorage implements IStorage {
     return result.length > 0;
   }
 
+  async notifyCompanyUsers(companyId: string, notification: Omit<InsertNotification, "userId">, roles: string[] = ["owner", "admin"]): Promise<Notification[]> {
+    const companyUsers = await this.getUsersByCompany(companyId);
+    const targetUsers = companyUsers.filter(u => roles.includes(u.role));
+    const created: Notification[] = [];
+    for (const targetUser of targetUsers) {
+      const notif = await this.createNotification(companyId, {
+        ...notification,
+        userId: targetUser.id,
+      } as InsertNotification);
+      created.push(notif);
+    }
+    return created;
+  }
+
   async generateNotifications(userId: string, companyId: string): Promise<Notification[]> {
     const newNotifications: Notification[] = [];
     const now = new Date();
@@ -1286,6 +1311,7 @@ export class DbStorage implements IStorage {
             const notification = await this.createNotification(companyId, {
               userId,
               type: 'receivable_aging',
+              category: 'finance',
               title: 'Aging Receivable Alert',
               message: `Receivable ${ar.arNumber} for ${clientName} is now ${threshold} days old (₱${parseFloat(ar.balance || '0').toLocaleString('en-PH', { minimumFractionDigits: 2 })})`,
               relatedId: ar.id,
@@ -1319,6 +1345,35 @@ export class DbStorage implements IStorage {
       companyId,
     }).returning();
     return createdLog;
+  }
+
+  async getActivityLogsFiltered(companyId: string, filters: ActivityLogFilters): Promise<{ logs: ActivityLog[]; total: number }> {
+    const conditions = [eq(activityLogs.companyId, companyId)];
+    if (filters.userId) conditions.push(eq(activityLogs.userId, filters.userId));
+    if (filters.entityType) conditions.push(eq(activityLogs.entityType, filters.entityType));
+    if (filters.startDate) conditions.push(gte(activityLogs.timestamp, filters.startDate));
+    if (filters.endDate) conditions.push(lte(activityLogs.timestamp, filters.endDate));
+
+    const whereClause = and(...conditions);
+
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(activityLogs)
+      .where(whereClause);
+
+    const page = filters.page && filters.page > 0 ? filters.page : 1;
+    const limit = filters.limit && filters.limit > 0 ? filters.limit : 25;
+    const offset = (page - 1) * limit;
+
+    const logs = await db
+      .select()
+      .from(activityLogs)
+      .where(whereClause)
+      .orderBy(desc(activityLogs.timestamp))
+      .limit(limit)
+      .offset(offset);
+
+    return { logs, total: count };
   }
 }
 
