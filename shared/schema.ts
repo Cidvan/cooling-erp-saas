@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, decimal, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, decimal, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -13,6 +13,49 @@ export const companies = pgTable("companies", {
   email: text("email"),
   taxId: text("tax_id"),
   status: text("status").notNull().default("active"), // active, inactive
+  dateCreated: timestamp("date_created").defaultNow(),
+  lastModified: timestamp("last_modified").defaultNow(),
+});
+
+// Per-company configuration: branding, regional settings, tax, business hours,
+// document numbering, and template placeholders. One row per company.
+export const companySettings = pgTable("company_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull().unique(),
+
+  // Branding
+  faviconUrl: text("favicon_url"),
+  theme: text("theme").default("default"),
+  tagline: text("tagline"),
+
+  // Regional
+  currencyCode: text("currency_code").notNull().default("PHP"), // ISO 4217
+  currencySymbol: text("currency_symbol").notNull().default("₱"),
+  timezone: text("timezone").notNull().default("Asia/Manila"),
+
+  // Business hours: { mon: {open, close, closed}, tue: {...}, ... }
+  businessHours: jsonb("business_hours"),
+  // Holiday calendar: [{ date: "2026-01-01", name: "New Year's Day" }, ...]
+  holidays: jsonb("holidays"),
+
+  // Tax configuration
+  taxEnabled: boolean("tax_enabled").notNull().default(false),
+  taxLabel: text("tax_label").default("VAT"),
+  taxRate: decimal("tax_rate", { precision: 5, scale: 2 }).default("0.00"),
+
+  // Document templates (identifier only — not a WYSIWYG editor)
+  invoiceTemplate: text("invoice_template").default("default"),
+  quotationTemplate: text("quotation_template").default("default"),
+  serviceReportTemplate: text("service_report_template").default("default"),
+
+  // Placeholders for future wiring (Notification Center task)
+  emailTemplates: jsonb("email_templates"),
+  notificationTemplates: jsonb("notification_templates"),
+
+  // Configurable document numbering, keyed by document type:
+  // { quotation: { prefix, padding, nextNumber, format }, invoice: {...}, ... }
+  documentNumbering: jsonb("document_numbering"),
+
   dateCreated: timestamp("date_created").defaultNow(),
   lastModified: timestamp("last_modified").defaultNow(),
 });
@@ -343,6 +386,13 @@ export const insertCompanySchema = createInsertSchema(companies).omit({
   lastModified: true,
 });
 
+export const insertCompanySettingsSchema = createInsertSchema(companySettings).omit({
+  id: true,
+  companyId: true,
+  dateCreated: true,
+  lastModified: true,
+});
+
 export const updateUserProfileSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(50),
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
@@ -373,8 +423,10 @@ export const insertServiceReportSchema = createInsertSchema(serviceReports).omit
   dateCreated: true,
   lastModified: true,
 }).extend({
-  // Handle date strings from JSON by coercing them to Date objects
-  reportNumber: z.string().min(1, "Report number is required"),
+  // Handle date strings from JSON by coercing them to Date objects.
+  // Report number is optional here; when blank, the server auto-generates one
+  // using the company's configured document numbering (defaults to manual entry).
+  reportNumber: z.string().optional(),
   serviceDate: z.coerce.date(),
   timeStarted: z.coerce.date().optional(),
   timeEnded: z.coerce.date().optional(),
@@ -584,6 +636,8 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
 export type Company = typeof companies.$inferSelect;
+export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
+export type CompanySettings = typeof companySettings.$inferSelect;
 export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
 export type UpdatePassword = z.infer<typeof updatePasswordSchema>;
 export type InsertClient = z.infer<typeof insertClientSchema>;

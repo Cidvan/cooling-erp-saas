@@ -1,6 +1,7 @@
 import { 
   type User, type InsertUser, 
   type Company, type InsertCompany,
+  type CompanySettings, type InsertCompanySettings,
   type Client, type InsertClient, 
   type ServiceReport, type InsertServiceReport, 
   type ServiceLineItem, type InsertServiceLineItem, 
@@ -21,6 +22,7 @@ import {
   type ActivityLog, type InsertActivityLog,
   users,
   companies,
+  companySettings,
   clients, 
   serviceReports,
   serviceLineItems,
@@ -43,6 +45,40 @@ import {
 import { db } from "./db";
 import { eq, and, sql, desc, inArray } from "drizzle-orm";
 
+export type DocumentType = "quotation" | "invoice" | "purchaseOrder" | "serviceReport" | "accountsReceivable" | "accountsPayable";
+
+interface DocNumberingConfig {
+  prefix: string;
+  padding: number;
+  nextNumber: number;
+  format: string; // supports {PREFIX}, {YEAR}, {SEQ}
+}
+
+const DEFAULT_NUMBERING: Record<DocumentType, Omit<DocNumberingConfig, "nextNumber">> = {
+  quotation: { prefix: "QT", padding: 6, format: "{PREFIX}-{YEAR}-{SEQ}" },
+  invoice: { prefix: "INV", padding: 6, format: "{PREFIX}-{YEAR}-{SEQ}" },
+  purchaseOrder: { prefix: "PO", padding: 3, format: "{PREFIX}-{SEQ}" },
+  serviceReport: { prefix: "SR", padding: 6, format: "{PREFIX}-{YEAR}-{SEQ}" },
+  accountsReceivable: { prefix: "AR", padding: 3, format: "{PREFIX}-{SEQ}" },
+  accountsPayable: { prefix: "AP", padding: 3, format: "{PREFIX}-{SEQ}" },
+};
+
+function formatDocumentNumber(config: DocNumberingConfig, seq: number, date: Date = new Date()): string {
+  const seqStr = String(seq).padStart(config.padding, "0");
+  return config.format
+    .replace("{PREFIX}", config.prefix)
+    .replace("{YEAR}", String(date.getFullYear()))
+    .replace("{SEQ}", seqStr);
+}
+
+function nextSeqFromExisting(numbers: string[], prefix: string): number {
+  const nums = numbers
+    .filter((n) => typeof n === "string" && n.startsWith(`${prefix}-`))
+    .map((n) => parseInt(n.split("-")[1], 10))
+    .filter((n) => !isNaN(n));
+  return nums.length > 0 ? Math.max(...nums) + 1 : 1;
+}
+
 export interface IStorage {
   // Company methods
   getCompanies(): Promise<Company[]>;
@@ -51,6 +87,11 @@ export interface IStorage {
   createCompany(company: InsertCompany): Promise<Company>;
   updateCompany(id: string, company: Partial<InsertCompany>): Promise<Company | undefined>;
   deleteCompany(id: string): Promise<boolean>;
+
+  // Company Settings methods
+  getCompanySettings(companyId: string): Promise<CompanySettings>;
+  updateCompanySettings(companyId: string, settings: Partial<InsertCompanySettings>): Promise<CompanySettings>;
+  generateDocumentNumber(companyId: string, docType: DocumentType): Promise<string>;
 
   // User methods
   getUsers(): Promise<User[]>;
@@ -236,6 +277,72 @@ export class DbStorage implements IStorage {
     return result.length > 0;
   }
 
+  // Company Settings methods
+  private async computeInitialSeq(companyId: string, docType: DocumentType, prefix: string): Promise<number> {
+    switch (docType) {
+      case "accountsReceivable": {
+        const rows = await db.select().from(accountsReceivables).where(eq(accountsReceivables.companyId, companyId));
+        return nextSeqFromExisting(rows.map((r) => r.arNumber), prefix);
+      }
+      case "purchaseOrder": {
+        const rows = await db.select().from(purchaseOrders).where(eq(purchaseOrders.companyId, companyId));
+        return nextSeqFromExisting(rows.map((r) => r.poNumber), prefix);
+      }
+      case "accountsPayable": {
+        const rows = await db.select().from(accountsPayables).where(eq(accountsPayables.companyId, companyId));
+        return nextSeqFromExisting(rows.map((r) => r.apNumber), prefix);
+      }
+      default:
+        // Quotation/Invoice/Service Report legacy numbers use different prefixes
+        // (QUO-, INV-<timestamp>, manual), so a fresh sequence under the new
+        // configurable prefix cannot collide with them.
+        return 1;
+    }
+  }
+
+  async getCompanySettings(companyId: string): Promise<CompanySettings> {
+    const existing = await db.select().from(companySettings).where(eq(companySettings.companyId, companyId));
+    if (existing[0]) return existing[0];
+
+    const numbering: Record<string, DocNumberingConfig> = {};
+    for (const docType of Object.keys(DEFAULT_NUMBERING) as DocumentType[]) {
+      const base = DEFAULT_NUMBERING[docType];
+      const nextNumber = await this.computeInitialSeq(companyId, docType, base.prefix);
+      numbering[docType] = { ...base, nextNumber };
+    }
+
+    const [created] = await db.insert(companySettings).values({
+      companyId,
+      documentNumbering: numbering,
+    }).returning();
+    return created;
+  }
+
+  async updateCompanySettings(companyId: string, updateData: Partial<InsertCompanySettings>): Promise<CompanySettings> {
+    await this.getCompanySettings(companyId); // ensure a row exists
+    const [updated] = await db
+      .update(companySettings)
+      .set({ ...updateData, lastModified: new Date() })
+      .where(eq(companySettings.companyId, companyId))
+      .returning();
+    return updated;
+  }
+
+  async generateDocumentNumber(companyId: string, docType: DocumentType): Promise<string> {
+    const settings = await this.getCompanySettings(companyId);
+    const numbering = (settings.documentNumbering as Record<string, DocNumberingConfig>) || {};
+    const config = numbering[docType] || { ...DEFAULT_NUMBERING[docType], nextNumber: 1 };
+    const formatted = formatDocumentNumber(config, config.nextNumber);
+
+    const updatedNumbering = { ...numbering, [docType]: { ...config, nextNumber: config.nextNumber + 1 } };
+    await db
+      .update(companySettings)
+      .set({ documentNumbering: updatedNumbering, lastModified: new Date() })
+      .where(eq(companySettings.companyId, companyId));
+
+    return formatted;
+  }
+
   // User methods
   async getUsers(): Promise<User[]> {
     return await db.select().from(users);
@@ -345,23 +452,23 @@ export class DbStorage implements IStorage {
   }
 
   async createServiceReport(companyId: string, insertReport: InsertServiceReport): Promise<ServiceReport> {
-    if (!insertReport.reportNumber) {
-      throw new Error("Report number is required");
-    }
+    const reportNumber = insertReport.reportNumber?.trim()
+      || await this.generateDocumentNumber(companyId, "serviceReport");
     
     // Check if report number already exists
     const existing = await db
       .select()
       .from(serviceReports)
-      .where(eq(serviceReports.reportNumber, insertReport.reportNumber));
+      .where(eq(serviceReports.reportNumber, reportNumber));
     
     if (existing.length > 0) {
-      throw new Error(`Report number ${insertReport.reportNumber} already exists`);
+      throw new Error(`Report number ${reportNumber} already exists`);
     }
     
     const [report] = await db.insert(serviceReports).values({
       ...insertReport,
       companyId,
+      reportNumber,
       acBrand: insertReport.acBrand ?? null,
       acModel: insertReport.acModel ?? null,
       acSerialNumber: insertReport.acSerialNumber ?? null,
@@ -534,7 +641,7 @@ export class DbStorage implements IStorage {
 
   async createQuotation(companyId: string, insertQuotation: InsertQuotation): Promise<Quotation> {
     const now = new Date();
-    const quotationNumber = insertQuotation.quotationNumber || `QUO-${Date.now()}`;
+    const quotationNumber = insertQuotation.quotationNumber || await this.generateDocumentNumber(companyId, "quotation");
     
     const [quotation] = await db.insert(quotations).values({
       ...insertQuotation,
@@ -638,11 +745,12 @@ export class DbStorage implements IStorage {
 
   async createInvoice(companyId: string, insertInvoice: InsertInvoice): Promise<Invoice> {
     const now = new Date();
+    const invoiceNumber = insertInvoice.invoiceNumber || await this.generateDocumentNumber(companyId, "invoice");
     
     const [invoice] = await db.insert(invoices).values({
       companyId,
       clientId: insertInvoice.clientId,
-      invoiceNumber: insertInvoice.invoiceNumber,
+      invoiceNumber,
       title: insertInvoice.title || "Invoice",
       invoiceDate: insertInvoice.invoiceDate || now,
       dueDate: insertInvoice.dueDate || new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
@@ -737,16 +845,8 @@ export class DbStorage implements IStorage {
   }
 
   async createAccountsReceivable(companyId: string, insertAR: InsertAccountsReceivable): Promise<AccountsReceivable> {
-    // Generate AR number (AR-001, AR-002, etc.) scoped per company
-    const existingARs = await db.select().from(accountsReceivables).where(eq(accountsReceivables.companyId, companyId));
-    const existingNumbers = existingARs
-      .map(ar => ar.arNumber)
-      .filter(num => num.startsWith('AR-'))
-      .map(num => parseInt(num.split('-')[1]))
-      .filter(num => !isNaN(num));
-    
-    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
-    const arNumber = `AR-${String(nextNumber).padStart(3, '0')}`;
+    // Generate AR number using the company's configurable numbering format (default AR-001, AR-002, etc.)
+    const arNumber = await this.generateDocumentNumber(companyId, "accountsReceivable");
     
     const [ar] = await db.insert(accountsReceivables).values({
       ...insertAR,
@@ -913,16 +1013,8 @@ export class DbStorage implements IStorage {
   }
 
   async createPurchaseOrder(companyId: string, insertPO: InsertPurchaseOrder): Promise<PurchaseOrder> {
-    // Generate PO number (PO-001, PO-002, etc.) scoped per company
-    const existingPOs = await db.select().from(purchaseOrders).where(eq(purchaseOrders.companyId, companyId));
-    const existingNumbers = existingPOs
-      .map(po => po.poNumber)
-      .filter(num => num.startsWith('PO-'))
-      .map(num => parseInt(num.split('-')[1]))
-      .filter(num => !isNaN(num));
-    
-    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
-    const poNumber = `PO-${String(nextNumber).padStart(3, '0')}`;
+    // Generate PO number using the company's configurable numbering format (default PO-001, PO-002, etc.)
+    const poNumber = await this.generateDocumentNumber(companyId, "purchaseOrder");
     
     const [po] = await db.insert(purchaseOrders).values({
       ...insertPO,
@@ -1048,16 +1140,8 @@ export class DbStorage implements IStorage {
   }
 
   async createAccountsPayable(companyId: string, insertAP: InsertAccountsPayable): Promise<AccountsPayable> {
-    // Generate AP number (AP-001, AP-002, etc.) scoped per company
-    const existingAPs = await db.select().from(accountsPayables).where(eq(accountsPayables.companyId, companyId));
-    const existingNumbers = existingAPs
-      .map(ap => ap.apNumber)
-      .filter(num => num.startsWith('AP-'))
-      .map(num => parseInt(num.split('-')[1]))
-      .filter(num => !isNaN(num));
-    
-    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
-    const apNumber = `AP-${String(nextNumber).padStart(3, '0')}`;
+    // Generate AP number using the company's configurable numbering format (default AP-001, AP-002, etc.)
+    const apNumber = await this.generateDocumentNumber(companyId, "accountsPayable");
     
     const [ap] = await db.insert(accountsPayables).values({
       ...insertAP,

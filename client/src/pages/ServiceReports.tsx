@@ -393,16 +393,6 @@ export default function ServiceReports() {
       return;
     }
 
-    const trimmedReportNumber = serviceReport.reportNumber?.trim();
-    if (!trimmedReportNumber) {
-      toast({
-        title: "Error",
-        description: "Please enter a report number",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!serviceReport.serviceDate || serviceReport.serviceDate.toString().trim() === "") {
       toast({
         title: "Error", 

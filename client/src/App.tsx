@@ -22,6 +22,7 @@ import PLCashFlow from "@/pages/PLCashFlow";
 import PurchaseOrders from "@/pages/PurchaseOrders";
 import Documents from "@/pages/Documents";
 import Profile from "@/pages/Profile";
+import Settings from "@/pages/Settings";
 import PlaceholderPage from "@/pages/PlaceholderPage";
 import SuperAdminCompanies from "@/pages/SuperAdminCompanies";
 import NotFound from "@/pages/not-found";
@@ -75,19 +76,7 @@ function ProtectedRoutes() {
         <FinanceRoute component={PurchaseOrders} />
       </Route>
       <Route path="/documents" component={Documents} />
-      <Route path="/settings">
-        <PlaceholderPage 
-          title="Settings"
-          description="Configure your ERP system preferences"
-          comingSoonFeatures={[
-            "User management",
-            "System preferences",
-            "Data backup settings",
-            "Integration configuration",
-            "Security settings"
-          ]}
-        />
-      </Route>
+      <Route path="/settings" component={Settings} />
       <Route path="/profile" component={Profile} />
       <Route path="/admin/companies">
         <SuperAdminRoute component={SuperAdminCompanies} />

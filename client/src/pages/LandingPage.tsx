@@ -20,10 +20,10 @@ export default function LandingPage() {
             CoolDesk
           </h1>
           <h2 className="text-3xl font-semibold text-primary mb-4">
-            ERP Management System
+            Business Operating System for HVAC &amp; Service Companies
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Streamline your business operations with our comprehensive Enterprise Resource Planning solution
+            Manage clients, service reports, quotations, and financial data all in one place
           </p>
           <Button
             size="lg"

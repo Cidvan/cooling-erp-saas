@@ -20,6 +20,7 @@ import { FileText, Users, DollarSign, CreditCard, ShoppingCart, FileCheck, Trend
 import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrency } from "@/hooks/use-currency";
 import { insertAccountsReceivableSchema } from "@shared/schema";
 import type { ServiceReport, Quotation, Client, AccountsReceivable, PurchaseOrder } from "@shared/schema";
 import type { z } from "zod";
@@ -66,6 +67,7 @@ type ARPaymentEntry = {
 };
 
 export default function Documents() {
+  const { formatCurrency } = useCurrency();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("service-reports");
   const [reportToDelete, setReportToDelete] = useState<ServiceReport | null>(null);
@@ -560,7 +562,7 @@ export default function Documents() {
                             {quotation.validUntil ? format(new Date(quotation.validUntil), "MMM dd, yyyy") : "-"}
                           </TableCell>
                           <TableCell className="max-w-xs truncate">{quotation.title || "-"}</TableCell>
-                          <TableCell>₱{parseFloat(quotation.total || "0").toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell>{formatCurrency(quotation.total)}</TableCell>
                           <TableCell>
                             <Badge variant={getStatusBadgeVariant(quotation.status)}>
                               {quotation.status}
@@ -715,8 +717,8 @@ export default function Documents() {
                           <TableCell>{getClientName(ar.clientId)}</TableCell>
                           <TableCell>{ar.srNumber || "-"}</TableCell>
                           <TableCell>{ar.ciNumber || "-"}</TableCell>
-                          <TableCell>₱{parseFloat(ar.amount || "0").toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                          <TableCell>₱{parseFloat(ar.balance || "0").toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell>{formatCurrency(ar.amount)}</TableCell>
+                          <TableCell>{formatCurrency(ar.balance)}</TableCell>
                           <TableCell>
                             {ar.dueDate ? format(new Date(ar.dueDate), "MMM dd, yyyy") : "-"}
                           </TableCell>
@@ -771,7 +773,7 @@ export default function Documents() {
                           <TableCell>
                             {sale.date ? format(new Date(sale.date), "MMM dd, yyyy") : "-"}
                           </TableCell>
-                          <TableCell>₱{parseFloat(sale.amount || "0").toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell>{formatCurrency(sale.amount)}</TableCell>
                           <TableCell>
                             <Badge variant="outline">
                               {sale.paymentMethod.replace("_", " ")}
@@ -821,7 +823,7 @@ export default function Documents() {
                             {po.date ? format(new Date(po.date), "MMM dd, yyyy") : "-"}
                           </TableCell>
                           <TableCell>{po.supplierName}</TableCell>
-                          <TableCell>₱{parseFloat(po.grandTotal || "0").toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell>{formatCurrency(po.grandTotal)}</TableCell>
                           <TableCell>
                             <Badge variant={getStatusBadgeVariant(po.status)}>
                               {po.status}
@@ -919,7 +921,7 @@ export default function Documents() {
                           <TableCell>
                             {expense.date ? format(new Date(expense.date), "MMM dd, yyyy") : "-"}
                           </TableCell>
-                          <TableCell>₱{parseFloat(expense.amount || "0").toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                          <TableCell>{formatCurrency(expense.amount)}</TableCell>
                           <TableCell>
                             <Badge variant="outline">
                               {expense.category}
@@ -978,8 +980,8 @@ export default function Documents() {
               <div className="text-sm text-muted-foreground space-y-0.5 pt-1">
                 <p><span className="font-medium">AR Number:</span> {updatePaymentsAR.arNumber}</p>
                 <p><span className="font-medium">Client:</span> {getClientName(updatePaymentsAR.clientId)}</p>
-                <p><span className="font-medium">Total Amount:</span> ₱{parseFloat(updatePaymentsAR.amount || "0").toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
-                <p><span className="font-medium">Balance:</span> ₱{parseFloat(updatePaymentsAR.balance || "0").toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
+                <p><span className="font-medium">Total Amount:</span> {formatCurrency(updatePaymentsAR.amount)}</p>
+                <p><span className="font-medium">Balance:</span> {formatCurrency(updatePaymentsAR.balance)}</p>
                 <p><span className="font-medium">Payment Terms:</span> {updatePaymentsAR.paymentTerms || "—"} <span className="text-xs">(fixed)</span></p>
                 {updatePaymentsAR.dueDate && (
                   <p><span className="font-medium">Due Date:</span> {format(new Date(updatePaymentsAR.dueDate), "MMM dd, yyyy")}</p>
@@ -1300,7 +1302,7 @@ export default function Documents() {
                     </div>
                     {totalARPayments > 0 && index === arPayments.length - 1 && (
                       <div className="text-sm text-muted-foreground pt-2 border-t">
-                        Total Payments: ₱{totalARPayments.toFixed(2)}
+                        Total Payments: {formatCurrency(totalARPayments)}
                       </div>
                     )}
                   </div>

@@ -5,6 +5,7 @@ import ReceivablesAging from "@/components/ReceivablesAging";
 import SalesChart from "@/components/SalesChart";
 import ProfitLossChart from "@/components/ProfitLossChart";
 import RecentActivity from "@/components/RecentActivity";
+import { useCurrency } from "@/hooks/use-currency";
 import type { ActivityLog } from "@shared/schema";
 
 interface AnalyticsData {
@@ -21,6 +22,7 @@ interface AnalyticsData {
 }
 
 export default function Dashboard() {
+  const { formatCurrency } = useCurrency();
   // Fetch real dashboard analytics - refresh every 30 seconds
   const { data: analytics, isLoading } = useQuery<AnalyticsData>({
     queryKey: ['/api/dashboard/analytics'],
@@ -164,7 +166,7 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <DashboardCard
           title="Total Sales"
-          value={`₱${(analytics?.metrics?.totalSales || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`}
+          value={formatCurrency(analytics?.metrics?.totalSales)}
           change="All revenue"
           changeType="positive"
           icon={DollarSign}
@@ -188,7 +190,7 @@ export default function Dashboard() {
         />
         <DashboardCard
           title="Outstanding Receivables"
-          value={`₱${(analytics?.metrics?.outstandingReceivables || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`}
+          value={formatCurrency(analytics?.metrics?.outstandingReceivables)}
           change="Unpaid invoices"
           changeType="negative"
           icon={Clock}
@@ -200,7 +202,7 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         <DashboardCard
           title="Expenses (Month)"
-          value={`₱${(analytics?.metrics?.monthlyExpenses || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`}
+          value={formatCurrency(analytics?.metrics?.monthlyExpenses)}
           change="Current month expenses"
           changeType="neutral"
           icon={TrendingUp}

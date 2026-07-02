@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertClientSchema, insertServiceReportSchema, insertServiceLineItemSchema, insertQuotationSchema, insertQuotationLineItemSchema, insertInvoiceSchema, insertInvoiceLineItemSchema, insertAccountsReceivableSchema, insertOperationalExpenseSchema, insertSalesEntrySchema, insertPurchaseOrderSchema, insertPurchaseOrderItemSchema, insertAccountsPayableSchema, updateUserProfileSchema, updatePasswordSchema, insertNotificationSchema, insertCompanySchema } from "@shared/schema";
+import { insertClientSchema, insertServiceReportSchema, insertServiceLineItemSchema, insertQuotationSchema, insertQuotationLineItemSchema, insertInvoiceSchema, insertInvoiceLineItemSchema, insertAccountsReceivableSchema, insertOperationalExpenseSchema, insertSalesEntrySchema, insertPurchaseOrderSchema, insertPurchaseOrderItemSchema, insertAccountsPayableSchema, updateUserProfileSchema, updatePasswordSchema, insertNotificationSchema, insertCompanySchema, insertCompanySettingsSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 
 // Helper function to log activities
@@ -264,6 +264,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(company);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch company" });
+    }
+  });
+
+  // Update current user's company business info (owner/admin only)
+  app.patch("/api/company/me", requireAuth, requireCompany, requireRole("owner", "admin"), async (req, res) => {
+    try {
+      const companyId = req.session.companyId!;
+      const validatedData = insertCompanySchema.partial().parse(req.body);
+      const updated = await storage.updateCompany(companyId, validatedData);
+      if (!updated) {
+        return res.status(404).json({ error: "Company not found" });
+      }
+      await logActivity(companyId, 'updated', 'company', updated.id, updated.name, 'Updated company business info', req.session.userId, req.session.userName);
+      res.json(updated);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid company data", details: error });
+    }
+  });
+
+  // Company Settings routes
+  app.get("/api/company/settings", requireAuth, requireCompany, async (req, res) => {
+    try {
+      const companyId = req.session.companyId!;
+      const settings = await storage.getCompanySettings(companyId);
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch company settings" });
+    }
+  });
+
+  app.patch("/api/company/settings", requireAuth, requireCompany, async (req, res) => {
+    try {
+      const companyId = req.session.companyId!;
+      const validatedData = insertCompanySettingsSchema.partial().parse(req.body);
+      const settings = await storage.updateCompanySettings(companyId, validatedData);
+      await logActivity(companyId, 'updated', 'company_settings', settings.id, 'Company Settings', 'Updated company settings', req.session.userId, req.session.userName);
+      res.json(settings);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid settings data", details: error });
     }
   });
 
@@ -1128,7 +1167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const invoiceData = {
         clientId: quotation.clientId,
         quotationId: quotation.id,
-        invoiceNumber: `INV-${Date.now()}`, // Generate unique invoice number
+        invoiceNumber: await storage.generateDocumentNumber(companyId, "invoice"),
         title: quotation.title,
         description: quotation.description,
         terms: quotation.terms,
