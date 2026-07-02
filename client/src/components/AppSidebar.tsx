@@ -80,23 +80,29 @@ const superAdminItems = [
 function NavGroup({ label, items, location }: { label: string; items: typeof operationsItems; location: string }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      <SidebarGroupLabel className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80">
+        {label}
+      </SidebarGroupLabel>
       <SidebarGroupContent>
-        <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton 
-                asChild
-                data-active={location === item.url || (item.url !== "/" && location.startsWith(item.url))}
-                data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
-              >
-                <Link href={item.url} className="hover-elevate">
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+        <SidebarMenu className="gap-0.5">
+          {items.map((item) => {
+            const isActive = location === item.url || (item.url !== "/" && location.startsWith(item.url));
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  asChild
+                  data-active={isActive}
+                  data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+                  className="h-9 rounded-lg px-3 text-[13px] font-medium text-sidebar-foreground/80 transition-colors data-[active=true]:font-semibold data-[active=true]:text-primary data-[active=true]:shadow-[inset_0_0_0_1px_hsl(var(--sidebar-border))]"
+                >
+                  <Link href={item.url}>
+                    <item.icon className={`w-4 h-4 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
@@ -111,21 +117,21 @@ export function AppSidebar() {
 
   return (
     <Sidebar data-testid="sidebar-navigation">
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+      <SidebarHeader className="p-4 pb-2">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
             <span className="text-primary-foreground font-bold text-sm">CD</span>
           </div>
-          <div>
-            <div className="font-semibold text-sm">CoolDesk</div>
-            <div className="text-xs text-muted-foreground">
-              {isSuperAdmin ? "Platform Admin" : "ERP System"}
+          <div className="min-w-0">
+            <div className="font-semibold text-[15px] tracking-tight truncate">CoolDesk</div>
+            <div className="text-[11px] text-muted-foreground truncate">
+              {isSuperAdmin ? "Platform Admin" : "ERP Workspace"}
             </div>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="px-1 pt-2">
         {isSuperAdmin ? (
           <NavGroup label="Platform" items={superAdminItems} location={location} />
         ) : (

@@ -1,0 +1,454 @@
+We are redesigning the entire UI/UX of CoolDesk.
+
+IMPORTANT:
+
+This is NOT a redesign from scratch.
+
+Keep all existing functionality.
+
+Only redesign the interface and improve the user experience.
+
+====================================================
+DESIGN GOAL
+====================================================
+
+Use the attached dashboard only as visual inspiration.
+
+DO NOT copy it.
+
+Instead, create a more modern, cleaner, brighter, premium SaaS dashboard.
+
+The design should feel like:
+
+• Linear
+• Stripe Dashboard
+• Vercel Dashboard
+• Notion
+• Attio CRM
+• Clerk Dashboard
+
+The application should look like a modern enterprise SaaS platform released in 2026.
+
+====================================================
+COLOR PALETTE
+====================================================
+
+DO NOT use a black theme.
+
+Instead use:
+
+Primary Background:
+#F8FAFC
+
+Secondary Background:
+#FFFFFF
+
+Sidebar:
+White or very light gray
+
+Borders:
+Soft gray
+
+Primary Text:
+Dark Slate
+
+Secondary Text:
+Gray
+
+Accent Color:
+
+Use one consistent accent color.
+
+Suggestions:
+
+Blue
+Emerald
+Indigo
+
+Avoid using many random colors.
+
+====================================================
+STYLE
+====================================================
+
+The interface should be:
+
+Minimal
+
+Elegant
+
+Professional
+
+Enterprise
+
+Premium
+
+Modern
+
+Clean
+
+Calm
+
+Fast
+
+Simple
+
+Do NOT create a colorful admin template.
+
+Do NOT make it look like Bootstrap.
+
+Do NOT make it look like AdminLTE.
+
+====================================================
+TYPOGRAPHY
+====================================================
+
+Use modern typography.
+
+Large page titles.
+
+Comfortable spacing.
+
+Clear hierarchy.
+
+Readable font sizes.
+
+====================================================
+LAYOUT
+====================================================
+
+Keep the sidebar.
+
+Keep top navigation.
+
+Increase whitespace.
+
+Improve spacing.
+
+Improve alignment.
+
+Make everything breathe.
+
+Avoid clutter.
+
+====================================================
+SIDEBAR
+====================================================
+
+Modern sidebar.
+
+Simple icons.
+
+Clean hover effects.
+
+Rounded active menu.
+
+Smooth transitions.
+
+Collapsible sidebar.
+
+Grouped navigation.
+
+Company logo on top.
+
+Company switcher ready.
+
+====================================================
+TOPBAR
+====================================================
+
+Include:
+
+Company Name
+
+Current User
+
+Notifications
+
+Quick Search
+
+Profile Menu
+
+Theme Switcher (future ready)
+
+====================================================
+CARDS
+====================================================
+
+Dashboard cards should be redesigned.
+
+Requirements:
+
+Rounded corners
+
+Soft shadows
+
+Thin borders
+
+Large numbers
+
+Small labels
+
+Modern icons
+
+Subtle hover animation
+
+====================================================
+TABLES
+====================================================
+
+Redesign every table.
+
+Support:
+
+Sticky Header
+
+Search
+
+Filters
+
+Sorting
+
+Pagination
+
+Row Actions
+
+Status Badges
+
+Hover Effects
+
+Responsive Layout
+
+====================================================
+FORMS
+====================================================
+
+Modern forms.
+
+Better spacing.
+
+Rounded inputs.
+
+Floating labels or clean labels.
+
+Better validation.
+
+Modern dropdowns.
+
+Modern date picker.
+
+====================================================
+BUTTONS
+====================================================
+
+Consistent buttons.
+
+Primary
+
+Secondary
+
+Danger
+
+Ghost
+
+Icon Buttons
+
+Loading State
+
+Disabled State
+
+====================================================
+MODALS
+====================================================
+
+Modern modal dialogs.
+
+Nice spacing.
+
+Rounded corners.
+
+Keyboard friendly.
+
+====================================================
+BADGES
+====================================================
+
+Modern status badges.
+
+Examples:
+
+Active
+
+Inactive
+
+Pending
+
+Approved
+
+Completed
+
+Cancelled
+
+Paid
+
+Overdue
+
+====================================================
+CHARTS
+====================================================
+
+Modern charts.
+
+Simple.
+
+Minimal.
+
+Interactive.
+
+====================================================
+DASHBOARD
+====================================================
+
+Redesign the dashboard.
+
+Include widgets for:
+
+Revenue
+
+Projects
+
+Work Orders
+
+Inventory
+
+Collections
+
+Receivables
+
+Expenses
+
+Technician Performance
+
+Upcoming Maintenance
+
+Recent Activities
+
+Quick Actions
+
+====================================================
+RESPONSIVE
+====================================================
+
+Perfect on:
+
+Desktop
+
+Laptop
+
+Tablet
+
+Mobile
+
+====================================================
+ANIMATIONS
+====================================================
+
+Use subtle animations.
+
+Fade
+
+Slide
+
+Scale
+
+Hover
+
+Loading Skeleton
+
+Avoid excessive animations.
+
+====================================================
+ICONS
+====================================================
+
+Use one icon library consistently.
+
+Prefer Lucide Icons.
+
+====================================================
+DESIGN SYSTEM
+====================================================
+
+Create reusable UI components.
+
+Buttons
+
+Cards
+
+Inputs
+
+Tables
+
+Badges
+
+Dialogs
+
+Dropdowns
+
+Navigation
+
+Forms
+
+Alerts
+
+Everything should use one design language.
+
+====================================================
+ACCESSIBILITY
+====================================================
+
+Proper contrast.
+
+Keyboard navigation.
+
+ARIA support.
+
+Focus states.
+
+====================================================
+IMPORTANT
+====================================================
+
+Do NOT change business logic.
+
+Do NOT change APIs.
+
+Do NOT rewrite working modules.
+
+Do NOT remove existing features.
+
+Only improve the presentation layer.
+
+Reuse existing components whenever possible.
+
+====================================================
+BEFORE CHANGING ANYTHING
+====================================================
+
+First analyze the existing UI.
+
+Identify reusable components.
+
+Identify duplicate styles.
+
+Identify inconsistent layouts.
+
+Then create a UI modernization plan.
+
+Implement changes incrementally.
+
+Never redesign everything at once.
+
+Keep the application stable while making it look like a premium enterprise SaaS product.
+
+The final result should look like software that companies would confidently pay to use every month.

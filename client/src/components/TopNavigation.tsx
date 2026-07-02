@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Moon, Sun, User, Settings, LogOut, ChevronDown } from "lucide-react";
+import { Bell, Moon, Sun, User, Settings, LogOut, ChevronDown, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
@@ -85,30 +85,38 @@ export default function TopNavigation() {
   });
 
   return (
-    <header className="flex items-center justify-between p-4 border-b bg-background" data-testid="header-navigation">
-      <div className="flex items-center gap-4">
-        <SidebarTrigger data-testid="button-sidebar-toggle" />
-        <img 
-          src={logoUrl} 
-          alt="CoolDesk Logo" 
-          className="h-10 w-10 object-contain"
-          data-testid="img-company-logo"
-        />
-        <div>
-          <h1 className="font-semibold text-lg" data-testid="text-welcome-message">
-            Welcome, {userName}
+    <header className="flex items-center justify-between gap-4 h-16 px-6 border-b border-border bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60" data-testid="header-navigation">
+      <div className="flex items-center gap-3 min-w-0">
+        <SidebarTrigger data-testid="button-sidebar-toggle" className="rounded-lg" />
+        <div className="hidden md:block h-6 w-px bg-border" />
+        <div className="min-w-0">
+          <h1 className="font-semibold text-[15px] leading-tight truncate" data-testid="text-welcome-message">
+            Welcome back, {userName}
           </h1>
-          <p className="text-sm text-muted-foreground" data-testid="text-company-name">
+          <p className="text-xs text-muted-foreground truncate" data-testid="text-company-name">
             {companyName} &middot; {currentDate}
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="hidden lg:flex flex-1 max-w-md">
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            type="search"
+            placeholder="Search clients, reports, quotations..."
+            className="w-full h-9 rounded-lg border border-input bg-background pl-9 pr-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-shadow"
+            data-testid="input-quick-search"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
         <Button
-          variant="outline"
+          variant="ghost"
           size="icon"
           onClick={toggleTheme}
+          className="rounded-lg text-muted-foreground"
           data-testid="button-theme-toggle"
         >
           {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -117,9 +125,9 @@ export default function TopNavigation() {
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="relative"
+              className="relative rounded-lg text-muted-foreground"
               data-testid="button-notifications"
             >
               <Bell className="h-4 w-4" />
@@ -138,23 +146,25 @@ export default function TopNavigation() {
           </PopoverContent>
         </Popover>
 
+        <div className="hidden sm:block h-6 w-px bg-border mx-1" />
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2 pl-3 border-l" data-testid="button-user-menu">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-primary-foreground font-medium text-sm" data-testid="text-user-avatar">
+            <Button variant="ghost" className="flex items-center gap-2 pl-1.5 pr-2 rounded-lg" data-testid="button-user-menu">
+              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shrink-0">
+                <span className="text-primary-foreground font-medium text-xs" data-testid="text-user-avatar">
                   {userName.split(' ').map(n => n[0]).join('').toUpperCase()}
                 </span>
               </div>
-              <div className="flex flex-col items-start">
+              <div className="hidden sm:flex flex-col items-start">
                 <span className="text-sm font-medium leading-none" data-testid="text-user-name">
                   {userName}
                 </span>
-                <Badge variant="secondary" className="text-xs mt-0.5 capitalize no-default-active-elevate">
+                <span className="text-[11px] text-muted-foreground capitalize mt-0.5">
                   {userRole}
-                </Badge>
+                </span>
               </div>
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">

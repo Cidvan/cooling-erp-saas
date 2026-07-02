@@ -14,80 +14,80 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: 220 15% 97%;
+  --background: 210 40% 98%;
 
-  --foreground: 220 15% 15%;
+  --foreground: 222 47% 11%;
 
-  --border: 220 15% 85%;
+  --border: 214 32% 91%;
 
   --card: 0 0% 100%;
 
-  --card-foreground: 220 15% 15%;
+  --card-foreground: 222 47% 11%;
 
-  --card-border: 220 15% 90%;
+  --card-border: 214 32% 91%;
 
-  --sidebar: 220 15% 94%;
+  --sidebar: 0 0% 100%;
 
-  --sidebar-foreground: 220 15% 15%;
+  --sidebar-foreground: 222 47% 11%;
 
-  --sidebar-border: 220 15% 88%;
+  --sidebar-border: 214 32% 93%;
 
-  --sidebar-primary: 208 100% 50%;
+  --sidebar-primary: 243 75% 59%;
 
   --sidebar-primary-foreground: 0 0% 100%;
 
-  --sidebar-accent: 220 15% 87%;
+  --sidebar-accent: 243 75% 96%;
 
-  --sidebar-accent-foreground: 220 15% 20%;
+  --sidebar-accent-foreground: 243 65% 45%;
 
-  --sidebar-ring: 208 100% 50%;
+  --sidebar-ring: 243 75% 59%;
 
-  --popover: 0 0% 98%;
+  --popover: 0 0% 100%;
 
-  --popover-foreground: 220 15% 15%;
+  --popover-foreground: 222 47% 11%;
 
-  --popover-border: 220 15% 85%;
+  --popover-border: 214 32% 91%;
 
-  --primary: 208 100% 50%;
+  --primary: 243 75% 59%;
 
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 220 15% 91%;
+  --secondary: 210 40% 96%;
 
-  --secondary-foreground: 220 15% 20%;
+  --secondary-foreground: 222 47% 20%;
 
-  --muted: 220 10% 93%;
+  --muted: 210 40% 96%;
 
-  --muted-foreground: 220 10% 45%;
+  --muted-foreground: 215 16% 47%;
 
-  --accent: 220 15% 89%;
+  --accent: 243 75% 96%;
 
-  --accent-foreground: 220 15% 20%;
+  --accent-foreground: 243 65% 45%;
 
-  --destructive: 0 75% 55%;
+  --destructive: 0 72% 51%;
 
-  --destructive-foreground: 0 15% 95%;
+  --destructive-foreground: 0 0% 98%;
 
-  --input: 220 15% 80%;
-  --ring: 208 100% 50%;
-  --chart-1: 208 100% 50%;
-  --chart-2: 142 71% 45%;
-  --chart-3: 38 92% 55%;
-  --chart-4: 0 75% 55%;
-  --chart-5: 210 85% 60%;
+  --input: 214 32% 88%;
+  --ring: 243 75% 59%;
+  --chart-1: 243 75% 59%;
+  --chart-2: 158 64% 42%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 0 72% 51%;
+  --chart-5: 199 89% 48%;
 
   --font-sans: Inter, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
-  --radius: .5rem; /* 8px */
-  --shadow-2xs: 0px 2px 0px 0px hsl(220 15% 85% / 0.10);
-  --shadow-xs: 0px 2px 0px 0px hsl(220 15% 85% / 0.10);
-  --shadow-sm: 0px 2px 0px 0px hsl(220 15% 85% / 0.10), 0px 1px 2px -1px hsl(220 15% 85% / 0.15);
-  --shadow: 0px 2px 0px 0px hsl(220 15% 85% / 0.10), 0px 1px 2px -1px hsl(220 15% 85% / 0.15);
-  --shadow-md: 0px 2px 0px 0px hsl(220 15% 85% / 0.10), 0px 2px 4px -1px hsl(220 15% 85% / 0.20);
-  --shadow-lg: 0px 2px 0px 0px hsl(220 15% 85% / 0.10), 0px 4px 6px -1px hsl(220 15% 85% / 0.25);
-  --shadow-xl: 0px 2px 0px 0px hsl(220 15% 85% / 0.10), 0px 8px 10px -1px hsl(220 15% 85% / 0.30);
-  --shadow-2xl: 0px 2px 0px 0px hsl(220 15% 85% / 0.10);
+  --radius: .75rem; /* 12px */
+  --shadow-2xs: 0px 1px 2px 0px rgb(15 23 42 / 0.04);
+  --shadow-xs: 0px 1px 2px 0px rgb(15 23 42 / 0.04);
+  --shadow-sm: 0px 1px 3px 0px rgb(15 23 42 / 0.06), 0px 1px 2px -1px rgb(15 23 42 / 0.06);
+  --shadow: 0px 1px 3px 0px rgb(15 23 42 / 0.06), 0px 1px 2px -1px rgb(15 23 42 / 0.06);
+  --shadow-md: 0px 4px 6px -1px rgb(15 23 42 / 0.06), 0px 2px 4px -2px rgb(15 23 42 / 0.06);
+  --shadow-lg: 0px 10px 15px -3px rgb(15 23 42 / 0.06), 0px 4px 6px -4px rgb(15 23 42 / 0.06);
+  --shadow-xl: 0px 20px 25px -5px rgb(15 23 42 / 0.08), 0px 8px 10px -6px rgb(15 23 42 / 0.08);
+  --shadow-2xl: 0px 25px 50px -12px rgb(15 23 42 / 0.12);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
@@ -150,7 +150,7 @@
 
   --sidebar-border: 220 15% 15%;
 
-  --sidebar-primary: 208 100% 50%;
+  --sidebar-primary: 243 75% 65%;
 
   --sidebar-primary-foreground: 0 0% 100%;
 
@@ -158,7 +158,7 @@
 
   --sidebar-accent-foreground: 220 15% 85%;
 
-  --sidebar-ring: 208 100% 50%;
+  --sidebar-ring: 243 75% 65%;
 
   --popover: 220 15% 14%;
 
@@ -166,7 +166,7 @@
 
   --popover-border: 220 15% 22%;
 
-  --primary: 208 100% 50%;
+  --primary: 243 75% 65%;
 
   --primary-foreground: 0 0% 100%;
 
@@ -182,27 +182,27 @@
 
   --accent-foreground: 220 15% 85%;
 
-  --destructive: 0 75% 55%;
+  --destructive: 0 72% 55%;
 
   --destructive-foreground: 0 15% 95%;
 
   /* Used as the border around inputs. Dark mode: Should be a border that is light enough to have high contrast when rendered on a --card background. More contrast than standard --border */
   --input: 220 15% 25%;
-  --ring: 208 100% 50%;
-  --chart-1: 208 100% 60%;
-  --chart-2: 142 71% 65%;
-  --chart-3: 38 92% 70%;
-  --chart-4: 0 75% 70%;
-  --chart-5: 210 85% 75%;
+  --ring: 243 75% 65%;
+  --chart-1: 243 75% 65%;
+  --chart-2: 158 64% 55%;
+  --chart-3: 38 92% 65%;
+  --chart-4: 0 72% 65%;
+  --chart-5: 199 89% 60%;
 
-  --shadow-2xs: 0px 2px 0px 0px hsl(220 15% 5% / 0.20);
-  --shadow-xs: 0px 2px 0px 0px hsl(220 15% 5% / 0.20);
-  --shadow-sm: 0px 2px 0px 0px hsl(220 15% 5% / 0.20), 0px 1px 2px -1px hsl(220 15% 5% / 0.25);
-  --shadow: 0px 2px 0px 0px hsl(220 15% 5% / 0.20), 0px 1px 2px -1px hsl(220 15% 5% / 0.25);
-  --shadow-md: 0px 2px 0px 0px hsl(220 15% 5% / 0.20), 0px 2px 4px -1px hsl(220 15% 5% / 0.30);
-  --shadow-lg: 0px 2px 0px 0px hsl(220 15% 5% / 0.20), 0px 4px 6px -1px hsl(220 15% 5% / 0.35);
-  --shadow-xl: 0px 2px 0px 0px hsl(220 15% 5% / 0.20), 0px 8px 10px -1px hsl(220 15% 5% / 0.40);
-  --shadow-2xl: 0px 2px 0px 0px hsl(220 15% 5% / 0.20);
+  --shadow-2xs: 0px 1px 2px 0px rgb(0 0 0 / 0.30);
+  --shadow-xs: 0px 1px 2px 0px rgb(0 0 0 / 0.30);
+  --shadow-sm: 0px 1px 3px 0px rgb(0 0 0 / 0.35), 0px 1px 2px -1px rgb(0 0 0 / 0.35);
+  --shadow: 0px 1px 3px 0px rgb(0 0 0 / 0.35), 0px 1px 2px -1px rgb(0 0 0 / 0.35);
+  --shadow-md: 0px 4px 6px -1px rgb(0 0 0 / 0.35), 0px 2px 4px -2px rgb(0 0 0 / 0.35);
+  --shadow-lg: 0px 10px 15px -3px rgb(0 0 0 / 0.40), 0px 4px 6px -4px rgb(0 0 0 / 0.40);
+  --shadow-xl: 0px 20px 25px -5px rgb(0 0 0 / 0.45), 0px 8px 10px -6px rgb(0 0 0 / 0.45);
+  --shadow-2xl: 0px 25px 50px -12px rgb(0 0 0 / 0.55);
 
 }
 

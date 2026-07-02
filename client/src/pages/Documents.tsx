@@ -294,14 +294,14 @@ export default function Documents() {
       case "completed":
       case "accepted":
       case "paid":
-        return "default";
+        return "success";
       case "in_progress":
       case "sent":
-        return "secondary";
+        return "info";
       case "scheduled":
       case "draft":
       case "unsettled":
-        return "outline";
+        return "warning";
       case "rejected":
       case "expired":
         return "destructive";
