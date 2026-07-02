@@ -1,0 +1,440 @@
+We are now entering the next enhancement phase for CoolDesk.
+
+IMPORTANT:
+
+Do NOT immediately implement anything.
+
+First analyze the existing project and determine whether any of the requested features already exist.
+
+If a feature already exists:
+
+• Improve it.
+• Extend it.
+• Refactor only when necessary.
+• Never duplicate functionality.
+
+Maintain the existing architecture, coding standards, UI consistency, and business logic.
+
+====================================================
+PHASE OBJECTIVE
+====================================================
+
+Enhance CoolDesk into a premium Business Operating System for HVAC and Service Companies.
+
+The focus of this phase is platform maturity, administration, business workflow, executive visibility, and enterprise usability.
+
+====================================================
+1. PRODUCT POSITIONING
+====================================================
+
+Position CoolDesk as:
+
+"Business Operating System for HVAC & Service Companies"
+
+instead of simply calling it an ERP.
+
+Update branding where appropriate without affecting business logic.
+
+====================================================
+2. COMPANY SETTINGS
+====================================================
+
+Expand Company Settings.
+
+Allow every company to configure:
+
+• Company Name
+• Company Logo
+• Company Favicon
+• Company Theme
+• Business Information
+• Contact Information
+• Invoice Template
+• Quotation Template
+• Service Report Template
+• Currency
+• Timezone
+• Business Hours
+• Holiday Calendar
+• Tax Configuration
+• Email Templates
+• Notification Templates
+
+All company-specific information should come from Company Settings instead of hardcoded values.
+
+====================================================
+3. BUSINESS WORKFLOW ENGINE
+====================================================
+
+Introduce a workflow architecture.
+
+The goal is to support automated business processes.
+
+Example workflow:
+
+Quotation Approved
+
+↓
+
+Create Project
+
+↓
+
+Reserve Inventory
+
+↓
+
+Assign Technician
+
+↓
+
+Notify Warehouse
+
+↓
+
+Schedule Installation
+
+↓
+
+Notify Customer
+
+↓
+
+Generate Invoice
+
+Design the workflow to be modular and extensible.
+
+====================================================
+4. CALENDAR MODULE
+====================================================
+
+Create a centralized calendar.
+
+Include:
+
+• Installation Schedule
+• Preventive Maintenance Schedule
+• Technician Schedule
+• Project Deadlines
+• Accounts Receivable Due Dates
+• Accounts Payable Due Dates
+
+The calendar should aggregate existing system data instead of duplicating records.
+
+====================================================
+5. NOTIFICATION CENTER
+====================================================
+
+Create a professional notification center.
+
+Notifications should support:
+
+• Unread
+• Read
+• Today
+• Yesterday
+
+Categories:
+
+• System
+• Sales
+• Inventory
+• Projects
+• Finance
+• Service
+
+Notifications should be generated from existing events.
+
+====================================================
+6. DASHBOARD WIDGETS
+====================================================
+
+Redesign the dashboard using informative widgets.
+
+Widgets may include:
+
+• Revenue
+• Sales
+• Collections
+• Receivables
+• Payables
+• Inventory Value
+• Active Projects
+• Open Work Orders
+• Upcoming Preventive Maintenance
+• Technician Performance
+• Recent Activities
+
+Do NOT implement drag-and-drop.
+
+Do NOT implement dashboard customization.
+
+Only create a clean, modern executive dashboard.
+
+====================================================
+7. CUSTOMER TIMELINE
+====================================================
+
+Create a complete customer timeline.
+
+Display chronological business history.
+
+Examples:
+
+Customer Created
+
+↓
+
+Quotation Created
+
+↓
+
+Quotation Approved
+
+↓
+
+Project Started
+
+↓
+
+Installation Completed
+
+↓
+
+Service Reports
+
+↓
+
+Maintenance Visits
+
+↓
+
+Invoices
+
+↓
+
+Payments
+
+↓
+
+Warranty Events
+
+Use existing records whenever possible.
+
+====================================================
+8. TECHNICIAN DASHBOARD
+====================================================
+
+Create a dedicated dashboard for technicians.
+
+Display:
+
+• Today's Jobs
+• Assigned Work Orders
+• Schedule
+• Customer Information
+• Job Checklist
+• Before Photos
+• After Photos
+• Signature
+• Assigned Inventory
+• Service History
+
+Only technician-relevant information should be displayed.
+
+====================================================
+9. EXECUTIVE DASHBOARD
+====================================================
+
+Create an executive dashboard for Owners and Company Admins.
+
+Include:
+
+• Revenue
+• Profit
+• Cash Flow
+• Receivables
+• Payables
+• Sales Performance
+• Technician Performance
+• Inventory Value
+• Active Projects
+• Business Growth
+
+Focus on KPIs and business insights.
+
+====================================================
+10. AUDIT TRAIL
+====================================================
+
+Enhance the existing audit system.
+
+Track:
+
+• User
+• Action
+• Entity
+• Timestamp
+• IP Address
+• Browser
+• Device
+• Previous Value
+• New Value
+
+Provide detailed change history.
+
+====================================================
+11. ACTIVITY FEED
+====================================================
+
+Create a live activity feed.
+
+Examples:
+
+Ivan created Quotation QT-0001
+
+↓
+
+John approved Purchase Order PO-0003
+
+↓
+
+Maria completed Service Report SR-0021
+
+↓
+
+Warehouse released Inventory
+
+Display recent activities in chronological order.
+
+====================================================
+12. CENTRALIZED FILE MANAGER
+====================================================
+
+Create a File Manager module.
+
+Organize files by:
+
+• Company
+• Client
+• Project
+• Equipment
+• Warranty
+• Service Reports
+• Quotations
+• Purchase Orders
+• Images
+• Videos
+• PDFs
+• Documents
+
+Avoid duplicate uploads.
+
+Reuse existing attachments where possible.
+
+====================================================
+13. CONFIGURABLE DOCUMENT NUMBERING
+====================================================
+
+Create a numbering configuration system.
+
+Support configurable numbering formats.
+
+Examples:
+
+Quotation
+
+QT-2026-000001
+
+Invoice
+
+INV-2026-000001
+
+Purchase Order
+
+PO-2026-000001
+
+Service Report
+
+SR-2026-000001
+
+Companies should be able to customize prefixes and numbering behavior.
+
+====================================================
+14. SOFT DELETE
+====================================================
+
+Replace permanent deletion where appropriate.
+
+Support:
+
+• Soft Delete
+• Restore
+• Permanent Delete
+
+Deleted records should not appear in normal views.
+
+Provide a recycle bin or archived records view.
+
+====================================================
+15. COMPANY SWITCHER
+====================================================
+
+For Super Admin only.
+
+Provide a Company Switcher.
+
+Example:
+
+CoolDesk Platform
+
+↓
+
+ABC Cooling
+
+↓
+
+XYZ HVAC
+
+↓
+
+Demo Company
+
+Switching companies should change the application context without requiring another login.
+
+====================================================
+16. SYSTEM HEALTH DASHBOARD
+====================================================
+
+Create a platform monitoring page for Super Admin.
+
+Display:
+
+• Database Status
+• Storage Usage
+• Memory Usage
+• Active Users
+• Online Users
+• Last Backup
+• Application Version
+
+Architecture should allow future expansion.
+
+====================================================
+GENERAL RULES
+====================================================
+
+Before implementing anything:
+
+1. Analyze existing implementation.
+2. Determine if similar functionality already exists.
+3. Reuse existing code whenever possible.
+4. Never duplicate modules.
+5. Keep UI consistent with the CoolDesk design system.
+6. Do not break APIs.
+7. Do not change business logic unnecessarily.
+8. Implement incrementally.
+9. Make every feature modular and reusable.
+10. Follow enterprise SaaS best practices.
+
+The final implementation should feel like a polished commercial SaaS platform that businesses would confidently subscribe to and use daily.
