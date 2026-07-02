@@ -58,7 +58,7 @@ export default function NotificationCenter() {
   const { user } = useAuth();
   const userId = user?.id || "";
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [tab, setTab] = useState<"unread" | "all">("unread");
+  const [tab, setTab] = useState<"unread" | "read" | "all">("unread");
 
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ["/api/notifications", userId],
@@ -75,14 +75,12 @@ export default function NotificationCenter() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] }),
   });
 
-  const categories = useMemo(() => {
-    const set = new Set(notifications.map((n) => n.category || "system"));
-    return Array.from(set);
-  }, [notifications]);
+  const categories = useMemo(() => Object.keys(CATEGORY_LABELS), []);
 
   const filtered = useMemo(() => {
     return notifications.filter((n) => {
       if (tab === "unread" && n.isRead) return false;
+      if (tab === "read" && !n.isRead) return false;
       if (categoryFilter !== "all" && (n.category || "system") !== categoryFilter) return false;
       return true;
     });
@@ -113,11 +111,12 @@ export default function NotificationCenter() {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Tabs value={tab} onValueChange={(v) => setTab(v as "unread" | "all")}>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "unread" | "read" | "all")}>
           <TabsList>
             <TabsTrigger value="unread" data-testid="tab-unread">
               Unread {unreadCount > 0 && <Badge variant="default" className="ml-1.5">{unreadCount}</Badge>}
             </TabsTrigger>
+            <TabsTrigger value="read" data-testid="tab-read">Read</TabsTrigger>
             <TabsTrigger value="all" data-testid="tab-all">All</TabsTrigger>
           </TabsList>
         </Tabs>

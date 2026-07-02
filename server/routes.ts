@@ -322,6 +322,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Company Settings routes
+  app.get("/api/company/users", requireAuth, requireCompany, async (req, res) => {
+    try {
+      const companyId = req.session.companyId!;
+      const companyUsers = await storage.getUsersByCompany(companyId);
+      res.json(companyUsers.map((u) => ({ id: u.id, username: u.username, role: u.role })));
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch company users" });
+    }
+  });
+
   app.get("/api/company/settings", requireAuth, requireCompany, async (req, res) => {
     try {
       const companyId = req.session.companyId!;
@@ -2122,8 +2132,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Activity Log routes
   app.get("/api/activity-logs", async (req, res) => {
     try {
+      const companyId = req.session.companyId!;
+      // Paginated/searchable variant used by the Activity Feed page. Falls back to the
+      // legacy simple-limit shape (a bare array) when no page/search param is supplied,
+      // to preserve existing callers (e.g. Dashboard's Recent Activity widget).
+      if (req.query.page || req.query.search) {
+        const page = req.query.page ? parseInt(req.query.page as string) : 1;
+        const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
+        const { logs, total } = await storage.getActivityLogsFiltered(companyId, {
+          entityType: req.query.entityType as string | undefined,
+          page,
+          limit,
+        });
+        const search = (req.query.search as string | undefined)?.trim().toLowerCase();
+        const filtered = search
+          ? logs.filter((l) =>
+              l.userName?.toLowerCase().includes(search) ||
+              l.entityName?.toLowerCase().includes(search) ||
+              l.description?.toLowerCase().includes(search)
+            )
+          : logs;
+        res.json({ logs: filtered, total, page, limit });
+        return;
+      }
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
-      const logs = await storage.getActivityLogs(req.session.companyId!, limit);
+      const logs = await storage.getActivityLogs(companyId, limit);
       res.json(logs);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch activity logs" });

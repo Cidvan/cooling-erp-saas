@@ -56,16 +56,28 @@ interface AuditLogsResponse {
   limit: number;
 }
 
+interface CompanyUser {
+  id: string;
+  username: string;
+  role: string;
+}
+
 export default function AuditTrail() {
   const [entityType, setEntityType] = useState<string>("all");
+  const [userId, setUserId] = useState<string>("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const limit = 25;
 
+  const { data: companyUsers = [] } = useQuery<CompanyUser[]>({
+    queryKey: ["/api/company/users"],
+  });
+
   const params = new URLSearchParams();
   if (entityType !== "all") params.set("entityType", entityType);
+  if (userId !== "all") params.set("userId", userId);
   if (startDate) params.set("startDate", new Date(startDate).toISOString());
   if (endDate) params.set("endDate", new Date(endDate + "T23:59:59").toISOString());
   params.set("page", String(page));
@@ -86,6 +98,7 @@ export default function AuditTrail() {
 
   const resetFilters = () => {
     setEntityType("all");
+    setUserId("all");
     setStartDate("");
     setEndDate("");
     setPage(1);
@@ -112,6 +125,20 @@ export default function AuditTrail() {
               <SelectItem value="all">All types</SelectItem>
               {ENTITY_TYPES.map((type) => (
                 <SelectItem key={type} value={type}>{ENTITY_LABELS[type]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">User</label>
+          <Select value={userId} onValueChange={(v) => { setUserId(v); setPage(1); }}>
+            <SelectTrigger className="w-52" data-testid="select-user">
+              <SelectValue placeholder="All users" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All users</SelectItem>
+              {companyUsers.map((u) => (
+                <SelectItem key={u.id} value={u.id}>{u.username}</SelectItem>
               ))}
             </SelectContent>
           </Select>
