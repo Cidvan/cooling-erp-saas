@@ -1,0 +1,601 @@
+You are a Senior SaaS Software Architect, Senior Full Stack Engineer, Senior Database Architect, Senior UI/UX Designer, System Analyst, and Product Manager.
+
+====================================================
+PROJECT CONTEXT
+====================================================
+
+This is NOT a new project.
+
+This is an existing, fully working ERP system that was originally developed for a single HVAC/Air Conditioning company named "JCAJ Cooling Solutions".
+
+The objective is to transform this existing custom ERP into a professional, production-ready, Multi-Tenant SaaS ERP Platform that can be used by multiple Air Conditioning, HVAC, Refrigeration, and Mechanical companies using a single codebase.
+
+This project will become a commercial SaaS product.
+
+The official product name is:
+
+COOLDESK
+
+Every reference to the previous client branding (JCAJ Cooling Solutions) should be removed or converted into dynamic company settings.
+
+====================================================
+CRITICAL RULES
+====================================================
+
+Before making ANY code changes:
+
+1. Analyze the entire project.
+2. Analyze the database schema.
+3. Analyze every existing module.
+4. Analyze routes.
+5. Analyze pages.
+6. Analyze components.
+7. Analyze APIs.
+8. Analyze services.
+9. Analyze business logic.
+10. Analyze reusable utilities.
+
+DO NOT rebuild working features.
+
+DO NOT duplicate modules.
+
+If a feature already exists:
+
+• Improve it.
+• Extend it.
+• Refactor only if necessary.
+• Reuse existing code.
+
+Always integrate into the existing architecture.
+
+Always preserve backward compatibility whenever possible.
+
+Always maintain clean architecture.
+
+Always follow the existing coding style.
+
+Never break existing functionality.
+
+====================================================
+REBRANDING
+====================================================
+
+Replace every hardcoded reference related to:
+
+JCAJ Cooling Solutions
+
+Examples:
+
+• Company Name
+• Logos
+• Images
+• Dashboard Text
+• Welcome Messages
+• Email Templates
+• Reports
+• PDFs
+• Invoice Headers
+• Quotations
+• Service Reports
+• Footer
+• Titles
+• Metadata
+• Browser Title
+• Login Page
+• Sidebar
+• Navbar
+• Placeholder Data
+
+Replace them with:
+
+CoolDesk
+
+or dynamic Company Settings whenever appropriate.
+
+Nothing should remain hardcoded for a specific client.
+
+====================================================
+PRIMARY GOAL
+====================================================
+
+Transform the system into a Multi-Tenant SaaS ERP Platform.
+
+Support unlimited companies.
+
+Each company must have:
+
+• isolated data
+• isolated users
+• isolated settings
+• isolated reports
+• isolated inventory
+• isolated quotations
+• isolated projects
+• isolated branding
+• isolated dashboards
+
+No company should ever see another company's information.
+
+====================================================
+MULTI-TENANT FOUNDATION
+====================================================
+
+Implement proper tenant architecture.
+
+Each company should have:
+
+• Company Profile
+• Company Settings
+• Company Logo
+• Company Address
+• Contact Information
+• Tax Information
+• Company Preferences
+• Theme
+• Branches
+• Active/Inactive Status
+
+Every business table should belong to one company.
+
+====================================================
+SUPER ADMIN
+====================================================
+
+Create a Super Admin Dashboard.
+
+Features:
+
+• Company Management
+• User Management
+• Platform Dashboard
+• Company Statistics
+• Company Usage
+• Audit Logs
+• Platform Settings
+• Global Reports
+
+====================================================
+COMPANY ADMIN
+====================================================
+
+Each company manages only its own:
+
+• Users
+• Customers
+• Inventory
+• Projects
+• Quotations
+• Reports
+• Employees
+
+====================================================
+ROLE BASED ACCESS
+====================================================
+
+Implement configurable RBAC.
+
+Possible roles:
+
+• Super Admin
+• Company Owner
+• Company Admin
+• Branch Manager
+• Dispatcher
+• Sales
+• Technician
+• Warehouse
+• Inventory
+• Purchasing
+• Accounting
+• HR
+• Customer
+
+Permissions must be configurable.
+
+====================================================
+BRANCH MANAGEMENT
+====================================================
+
+Support multiple branches.
+
+Each branch may have:
+
+• Employees
+• Warehouse
+• Inventory
+• Reports
+• Projects
+• Sales
+
+====================================================
+CRM
+====================================================
+
+If CRM already exists, enhance it.
+
+Possible improvements:
+
+• Customer Timeline
+• Lead Management
+• Sales Pipeline
+• Lead Sources
+• Customer Tags
+• Categories
+• Notes
+• Documents
+• Customer History
+
+====================================================
+QUOTATION
+====================================================
+
+If quotation module exists:
+
+Improve with:
+
+• Revision History
+• Approval Workflow
+• Digital Signature
+• Email PDF
+• Convert to Project
+• Customer Approval
+
+====================================================
+PROJECT MANAGEMENT
+====================================================
+
+Enhance project module.
+
+Possible additions:
+
+• Milestones
+• Tasks
+• Budget
+• Progress Tracking
+• Photos
+• Attachments
+• Completion Report
+
+====================================================
+FIELD SERVICE
+====================================================
+
+Improve Service Management.
+
+Support:
+
+• Installation
+• Preventive Maintenance
+• Corrective Maintenance
+• Warranty Service
+• Emergency Service
+
+Each Work Order should support:
+
+• Priority
+• Status
+• Assigned Technician
+• Checklist
+• Notes
+• Before Photos
+• After Photos
+• Customer Signature
+
+====================================================
+EQUIPMENT MANAGEMENT
+====================================================
+
+Each installed equipment should maintain:
+
+• Brand
+• Model
+• Serial Number
+• Installation Date
+• Warranty
+• Customer
+• Service History
+• Maintenance History
+• Parts Replaced
+• Documents
+• Photos
+
+====================================================
+PREVENTIVE MAINTENANCE
+====================================================
+
+Support recurring maintenance schedules.
+
+Generate recurring Work Orders automatically.
+
+Track maintenance history.
+
+====================================================
+INVENTORY
+====================================================
+
+Enhance inventory.
+
+Support:
+
+• Warehouses
+• Branch Inventory
+• Technician Inventory
+• Reserved Stock
+• Transfers
+• Adjustments
+• Barcode
+• QR Code
+• Inventory Audit
+• Reorder Levels
+
+====================================================
+PURCHASING
+====================================================
+
+Support:
+
+• Purchase Requests
+• Purchase Orders
+• Suppliers
+• Receiving
+• Returns
+• Supplier Ratings
+
+====================================================
+FINANCE
+====================================================
+
+Enhance finance module if available.
+
+Support:
+
+• Sales
+• Expenses
+• Receivables
+• Payables
+• Collections
+• Cash Flow
+• Profit Summary
+
+====================================================
+PAYMENTS
+====================================================
+
+Support:
+
+• Cash
+• Bank Transfer
+• GCash
+• Maya
+• Partial Payments
+• Installments
+• Payment History
+
+====================================================
+HR
+====================================================
+
+If HR exists:
+
+Improve it.
+
+Possible additions:
+
+• Attendance
+• Leave
+• Employee Files
+• Certifications
+• Training
+• Performance
+
+====================================================
+DOCUMENT MANAGEMENT
+====================================================
+
+Support:
+
+• Contracts
+• Warranty Files
+• Manuals
+• Service Reports
+• Photos
+• Videos
+• PDFs
+• Attachments
+
+====================================================
+REPORTS
+====================================================
+
+Support reports for:
+
+• Sales
+• Revenue
+• Inventory
+• Projects
+• Technician Performance
+• Customers
+• Maintenance
+• Warranty
+
+====================================================
+CUSTOMER PORTAL
+====================================================
+
+Allow customers to:
+
+• View Quotations
+• Approve Quotations
+• Download Invoices
+• View Equipment
+• View Service History
+• Request Service
+
+====================================================
+SUPPLIER PORTAL
+====================================================
+
+Allow suppliers to:
+
+• View Purchase Orders
+• Upload Documents
+• Track Deliveries
+
+====================================================
+NOTIFICATIONS
+====================================================
+
+Support:
+
+• In-App Notifications
+• Email Notifications
+
+Architecture should be ready for SMS integration.
+
+====================================================
+AUTOMATION
+====================================================
+
+Support business workflow automation.
+
+Example:
+
+Quotation Approved
+
+↓
+
+Create Project
+
+↓
+
+Reserve Inventory
+
+↓
+
+Assign Technician
+
+↓
+
+Notify Warehouse
+
+====================================================
+AUDIT LOGS
+====================================================
+
+Track:
+
+• Login
+• Logout
+• Create
+• Update
+• Delete
+• Approvals
+• Rejections
+• Report Generation
+
+====================================================
+API READY
+====================================================
+
+Architecture should support:
+
+• REST API
+• Webhooks
+• Mobile App
+• Third-party Integrations
+
+====================================================
+IMPORT / EXPORT
+====================================================
+
+Support:
+
+• Excel
+• CSV
+• PDF
+
+====================================================
+BACKUP READY
+====================================================
+
+Architecture should support:
+
+• Backup
+• Restore
+
+====================================================
+SECURITY
+====================================================
+
+Support:
+
+• Session Management
+• Login History
+• Password Policy
+• Audit Trail
+
+Architecture should be ready for Two-Factor Authentication.
+
+====================================================
+SYSTEM SETTINGS
+====================================================
+
+Each company should customize:
+
+• Logo
+• Theme
+• Business Information
+• Taxes
+• Invoice Template
+• Email Templates
+• Units
+• Business Hours
+
+====================================================
+AI READY
+====================================================
+
+Prepare architecture for future AI modules only.
+
+Do NOT implement AI yet.
+
+Architecture should support future:
+
+• AI Quotation Assistant
+• AI Inventory Forecast
+• AI Maintenance Prediction
+• AI Report Summary
+• AI Customer Support
+
+====================================================
+DEVELOPMENT STRATEGY
+====================================================
+
+DO NOT implement everything at once.
+
+Work incrementally.
+
+For every task:
+
+1. Analyze existing implementation.
+2. List existing features.
+3. Identify missing features.
+4. Recommend improvements.
+5. Implement only what is missing.
+6. Verify no duplication.
+7. Verify existing functionality still works.
+
+Always prioritize:
+
+• Stability
+• Scalability
+• Maintainability
+• Reusability
+• Performance
+• Production-readiness
+
+Never rewrite working modules unnecessarily.
+
+Always extend before replacing.
+
+Think like you're building a world-class commercial SaaS ERP platform for the HVAC industry under the CoolDesk brand.
