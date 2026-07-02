@@ -34,6 +34,13 @@ export default function QuotationPDFPreview() {
   });
   const companyName = company?.name;
 
+  const { data: companySettings } = useQuery<{ currencySymbol?: string | null; timezone?: string | null }>({
+    queryKey: ["/api/company/settings"],
+    retry: false,
+  });
+  const currencySymbol = companySettings?.currencySymbol || "₱";
+  const timezone = companySettings?.timezone || "Asia/Manila";
+
   const { data: lineItems = [], isLoading: isLoadingLineItems, isSuccess: isSuccessLineItems } = useQuery<QuotationLineItem[]>({
     queryKey: ["/api/quotations", quotation?.id, "line-items"],
     enabled: !!quotation?.id,
@@ -69,6 +76,8 @@ export default function QuotationPDFPreview() {
             client={client!}
             lineItems={lineItems}
             companyName={companyName}
+            currencySymbol={currencySymbol}
+            timezone={timezone}
           />
         ).toBlob();
 
@@ -95,7 +104,7 @@ export default function QuotationPDFPreview() {
     return () => {
       cancelled = true;
     };
-  }, [hasQuotation, allQueriesSuccessful, quotation, client, lineItems, retryTrigger, companyName]);
+  }, [hasQuotation, allQueriesSuccessful, quotation, client, lineItems, retryTrigger, companyName, currencySymbol, timezone]);
 
   useEffect(() => {
     return () => {

@@ -98,6 +98,7 @@ export default function Settings() {
     currencyCode: "PHP",
     currencySymbol: "\u20b1",
     timezone: "Asia/Manila",
+    faviconUrl: "",
   });
 
   const [tax, setTax] = useState({
@@ -132,6 +133,7 @@ export default function Settings() {
       currencyCode: settings.currencyCode || "PHP",
       currencySymbol: settings.currencySymbol || "\u20b1",
       timezone: settings.timezone || "Asia/Manila",
+      faviconUrl: settings.faviconUrl || "",
     });
     setTax({
       taxEnabled: settings.taxEnabled || false,
@@ -382,6 +384,16 @@ export default function Settings() {
                   value={general.tagline}
                   onChange={(e) => setGeneral({ ...general, tagline: e.target.value })}
                   data-testid="input-tagline"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="faviconUrl">Favicon URL</Label>
+                <Input
+                  id="faviconUrl"
+                  placeholder="https://..."
+                  value={general.faviconUrl}
+                  onChange={(e) => setGeneral({ ...general, faviconUrl: e.target.value })}
+                  data-testid="input-favicon-url"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">

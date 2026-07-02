@@ -112,9 +112,26 @@ interface ServiceReportPDFProps {
   acUnits?: ServiceAcUnit[];
   companyName?: string;
   currencySymbol?: string;
+  timezone?: string;
 }
 
-export function ServiceReportPDFDocument({ serviceReport, client, lineItems = [], technicians = [], acUnits = [], companyName, currencySymbol = "₱" }: ServiceReportPDFProps) {
+function formatInTimezone(value: Date | string | number, timezone: string, pattern: 'date' | 'datetime') {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: 'long',
+      day: '2-digit',
+      ...(pattern === 'datetime' ? { hour: 'numeric', minute: '2-digit' } : {}),
+    }).format(date);
+  } catch {
+    return format(date, pattern === 'datetime' ? 'MMMM dd, yyyy hh:mm a' : 'MMMM dd, yyyy');
+  }
+}
+
+export function ServiceReportPDFDocument({ serviceReport, client, lineItems = [], technicians = [], acUnits = [], companyName, currencySymbol = "₱", timezone = "Asia/Manila" }: ServiceReportPDFProps) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -135,7 +152,7 @@ export function ServiceReportPDFDocument({ serviceReport, client, lineItems = []
           <View style={styles.row}>
             <Text style={styles.label}>Service Date:</Text>
             <Text style={styles.value}>
-              {serviceReport.serviceDate ? format(new Date(serviceReport.serviceDate), 'MMMM dd, yyyy') : '-'}
+              {serviceReport.serviceDate ? formatInTimezone(serviceReport.serviceDate, timezone, 'date') : '-'}
             </Text>
           </View>
           <View style={styles.row}>

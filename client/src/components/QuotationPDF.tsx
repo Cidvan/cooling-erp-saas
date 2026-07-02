@@ -100,10 +100,25 @@ const styles = StyleSheet.create({
   signatureTitle: { fontSize: 10 },
 });
 
-const formatCurrency = (amount: string | number | null | undefined) => {
-  if (amount === null || amount === undefined || amount === '') return '\u20b10.00';
+const makeFormatCurrency = (currencySymbol: string) => (amount: string | number | null | undefined) => {
+  if (amount === null || amount === undefined || amount === '') return `${currencySymbol}0.00`;
   const n = typeof amount === 'string' ? parseFloat(amount) : amount;
-  return `\u20b1${n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `${currencySymbol}${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+const formatDateInTimezone = (value: Date | string | number, timezone: string) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(date);
+  } catch {
+    return format(date, 'MMMM d, yyyy');
+  }
 };
 
 interface QuotationPDFDocumentProps {
@@ -111,9 +126,12 @@ interface QuotationPDFDocumentProps {
   client: Client;
   lineItems: QuotationLineItem[];
   companyName?: string;
+  currencySymbol?: string;
+  timezone?: string;
 }
 
-export function QuotationPDFDocument({ quotation, client, lineItems, companyName }: QuotationPDFDocumentProps) {
+export function QuotationPDFDocument({ quotation, client, lineItems, companyName, currencySymbol = "₱", timezone = "Asia/Manila" }: QuotationPDFDocumentProps) {
+  const formatCurrency = makeFormatCurrency(currencySymbol);
   const hasUnitPrice = lineItems.some(item => parseFloat(item.unitPrice || '0') > 0);
 
   const clientDisplay = client.company || client.name;
@@ -140,7 +158,7 @@ export function QuotationPDFDocument({ quotation, client, lineItems, companyName
         {/* Date + Quotation Number */}
         <View style={styles.dateRow}>
           <Text style={styles.dateText}>
-            {quotation.quotationDate ? format(new Date(quotation.quotationDate), 'MMMM d, yyyy') : ''}
+            {quotation.quotationDate ? formatDateInTimezone(quotation.quotationDate, timezone) : ''}
           </Text>
           <Text style={styles.quotationNumber}>NO.: {quotation.quotationNumber}</Text>
         </View>

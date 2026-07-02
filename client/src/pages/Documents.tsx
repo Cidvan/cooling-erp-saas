@@ -67,7 +67,7 @@ type ARPaymentEntry = {
 };
 
 export default function Documents() {
-  const { formatCurrency, symbol: currencySymbol } = useCurrency();
+  const { formatCurrency, symbol: currencySymbol, formatDate } = useCurrency();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("service-reports");
   const [reportToDelete, setReportToDelete] = useState<ServiceReport | null>(null);
@@ -437,7 +437,7 @@ export default function Documents() {
                           <TableCell className="font-medium">{report.reportNumber}</TableCell>
                           <TableCell>{getClientName(report.clientId)}</TableCell>
                           <TableCell>
-                            {report.serviceDate ? format(new Date(report.serviceDate), "MMM dd, yyyy") : "-"}
+                            {formatDate(report.serviceDate)}
                           </TableCell>
                           <TableCell>
                             <Badge variant={getStatusBadgeVariant(report.status)}>
@@ -556,10 +556,10 @@ export default function Documents() {
                           <TableCell className="font-medium">{quotation.quotationNumber}</TableCell>
                           <TableCell>{getClientName(quotation.clientId)}</TableCell>
                           <TableCell>
-                            {quotation.quotationDate ? format(new Date(quotation.quotationDate), "MMM dd, yyyy") : "-"}
+                            {formatDate(quotation.quotationDate)}
                           </TableCell>
                           <TableCell>
-                            {quotation.validUntil ? format(new Date(quotation.validUntil), "MMM dd, yyyy") : "-"}
+                            {formatDate(quotation.validUntil)}
                           </TableCell>
                           <TableCell className="max-w-xs truncate">{quotation.title || "-"}</TableCell>
                           <TableCell>{formatCurrency(quotation.total)}</TableCell>
@@ -712,7 +712,7 @@ export default function Documents() {
                         <TableRow key={ar.id} data-testid={`row-ar-${ar.id}`}>
                           <TableCell className="font-medium">{ar.arNumber}</TableCell>
                           <TableCell>
-                            {ar.date ? format(new Date(ar.date), "MMM dd, yyyy") : "-"}
+                            {formatDate(ar.date)}
                           </TableCell>
                           <TableCell>{getClientName(ar.clientId)}</TableCell>
                           <TableCell>{ar.srNumber || "-"}</TableCell>
@@ -720,7 +720,7 @@ export default function Documents() {
                           <TableCell>{formatCurrency(ar.amount)}</TableCell>
                           <TableCell>{formatCurrency(ar.balance)}</TableCell>
                           <TableCell>
-                            {ar.dueDate ? format(new Date(ar.dueDate), "MMM dd, yyyy") : "-"}
+                            {formatDate(ar.dueDate)}
                           </TableCell>
                           <TableCell>{ar.paymentTerms || "-"}</TableCell>
                           <TableCell>
@@ -771,7 +771,7 @@ export default function Documents() {
                       {salesEntries.map((sale) => (
                         <TableRow key={sale.id} data-testid={`row-sale-${sale.id}`}>
                           <TableCell>
-                            {sale.date ? format(new Date(sale.date), "MMM dd, yyyy") : "-"}
+                            {formatDate(sale.date)}
                           </TableCell>
                           <TableCell>{formatCurrency(sale.amount)}</TableCell>
                           <TableCell>
@@ -820,7 +820,7 @@ export default function Documents() {
                         <TableRow key={po.id} data-testid={`row-po-${po.id}`}>
                           <TableCell className="font-medium">{po.poNumber}</TableCell>
                           <TableCell>
-                            {po.date ? format(new Date(po.date), "MMM dd, yyyy") : "-"}
+                            {formatDate(po.date)}
                           </TableCell>
                           <TableCell>{po.supplierName}</TableCell>
                           <TableCell>{formatCurrency(po.grandTotal)}</TableCell>
@@ -870,7 +870,7 @@ export default function Documents() {
                           <TableCell className="font-medium">{report.reportNumber}</TableCell>
                           <TableCell>{getClientName(report.clientId)}</TableCell>
                           <TableCell>
-                            {report.serviceDate ? format(new Date(report.serviceDate), "MMM dd, yyyy") : "-"}
+                            {formatDate(report.serviceDate)}
                           </TableCell>
                           <TableCell>{report.technicianName || "-"}</TableCell>
                           <TableCell className="max-w-md truncate">
@@ -919,7 +919,7 @@ export default function Documents() {
                       {operationalExpenses.map((expense) => (
                         <TableRow key={expense.id} data-testid={`row-expense-${expense.id}`}>
                           <TableCell>
-                            {expense.date ? format(new Date(expense.date), "MMM dd, yyyy") : "-"}
+                            {formatDate(expense.date)}
                           </TableCell>
                           <TableCell>{formatCurrency(expense.amount)}</TableCell>
                           <TableCell>
@@ -984,7 +984,7 @@ export default function Documents() {
                 <p><span className="font-medium">Balance:</span> {formatCurrency(updatePaymentsAR.balance)}</p>
                 <p><span className="font-medium">Payment Terms:</span> {updatePaymentsAR.paymentTerms || "—"} <span className="text-xs">(fixed)</span></p>
                 {updatePaymentsAR.dueDate && (
-                  <p><span className="font-medium">Due Date:</span> {format(new Date(updatePaymentsAR.dueDate), "MMM dd, yyyy")}</p>
+                  <p><span className="font-medium">Due Date:</span> {formatDate(updatePaymentsAR.dueDate)}</p>
                 )}
               </div>
             )}

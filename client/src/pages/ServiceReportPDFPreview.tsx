@@ -35,11 +35,12 @@ export default function ServiceReportPDFPreview() {
   });
   const companyName = company?.name;
 
-  const { data: companySettings } = useQuery<{ currencySymbol?: string | null }>({
+  const { data: companySettings } = useQuery<{ currencySymbol?: string | null; timezone?: string | null }>({
     queryKey: ["/api/company/settings"],
     retry: false,
   });
   const currencySymbol = companySettings?.currencySymbol || "₱";
+  const timezone = companySettings?.timezone || "Asia/Manila";
 
   const { data: lineItems = [], isLoading: isLoadingLineItems, isSuccess: isSuccessLineItems } = useQuery<ServiceLineItem[]>({
     queryKey: ["/api/service-reports", serviceReport?.id, "line-items"],
@@ -101,6 +102,7 @@ export default function ServiceReportPDFPreview() {
             acUnits={acUnits}
             companyName={companyName}
             currencySymbol={currencySymbol}
+            timezone={timezone}
           />
         ).toBlob();
 
@@ -158,6 +160,7 @@ export default function ServiceReportPDFPreview() {
         acUnits={acUnits}
         companyName={companyName}
         currencySymbol={currencySymbol}
+        timezone={timezone}
       />
     ).toBlob();
 
