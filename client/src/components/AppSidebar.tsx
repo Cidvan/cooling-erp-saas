@@ -22,7 +22,8 @@ import {
   Bell,
   Activity,
   ShieldCheck,
-  CalendarDays
+  CalendarDays,
+  Trash2
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/lib/auth";
@@ -105,6 +106,12 @@ const auditItem = {
   icon: ShieldCheck,
 };
 
+const recycleBinItem = {
+  title: "Recycle Bin",
+  url: "/recycle-bin",
+  icon: Trash2,
+};
+
 function NavGroup({ label, items, location }: { label: string; items: typeof operationsItems; location: string }) {
   return (
     <SidebarGroup>
@@ -168,7 +175,7 @@ export function AppSidebar() {
             {!isOjt && <NavGroup label="Finance" items={financeItems} location={location} />}
             <NavGroup
               label="Activity"
-              items={user?.role === "owner" || user?.role === "admin" ? [...activityItems, auditItem] : activityItems}
+              items={user?.role === "owner" || user?.role === "admin" ? [...activityItems, auditItem, recycleBinItem] : activityItems}
               location={location}
             />
           </>

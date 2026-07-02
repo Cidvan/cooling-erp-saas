@@ -43,7 +43,7 @@ import {
   activityLogs,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, sql, desc, inArray, gte, lte } from "drizzle-orm";
+import { eq, and, sql, desc, inArray, gte, lte, isNull, isNotNull } from "drizzle-orm";
 
 export type DocumentType = "quotation" | "invoice" | "purchaseOrder" | "serviceReport" | "accountsReceivable" | "accountsPayable";
 
@@ -108,6 +108,9 @@ export interface IStorage {
   createClient(companyId: string, client: InsertClient): Promise<Client>;
   updateClient(id: string, companyId: string, client: Partial<InsertClient>): Promise<Client | undefined>;
   deleteClient(id: string, companyId: string): Promise<boolean>;
+  softDeleteClient(id: string, companyId: string): Promise<boolean>;
+  restoreClient(id: string, companyId: string): Promise<boolean>;
+  getDeletedClients(companyId: string): Promise<Client[]>;
   
   // Service Report methods
   getServiceReports(companyId: string): Promise<ServiceReport[]>;
@@ -116,6 +119,9 @@ export interface IStorage {
   createServiceReport(companyId: string, report: InsertServiceReport): Promise<ServiceReport>;
   updateServiceReport(id: string, companyId: string, report: Partial<InsertServiceReport>): Promise<ServiceReport | undefined>;
   deleteServiceReport(id: string, companyId: string): Promise<boolean>;
+  softDeleteServiceReport(id: string, companyId: string): Promise<boolean>;
+  restoreServiceReport(id: string, companyId: string): Promise<boolean>;
+  getDeletedServiceReports(companyId: string): Promise<ServiceReport[]>;
   
   // Service Line Item methods
   getServiceLineItems(serviceReportId: string): Promise<ServiceLineItem[]>;
@@ -144,6 +150,9 @@ export interface IStorage {
   createQuotation(companyId: string, quotation: InsertQuotation): Promise<Quotation>;
   updateQuotation(id: string, companyId: string, quotation: Partial<InsertQuotation>): Promise<Quotation | undefined>;
   deleteQuotation(id: string, companyId: string): Promise<boolean>;
+  softDeleteQuotation(id: string, companyId: string): Promise<boolean>;
+  restoreQuotation(id: string, companyId: string): Promise<boolean>;
+  getDeletedQuotations(companyId: string): Promise<Quotation[]>;
   
   // Quotation Line Item methods
   getQuotationLineItems(quotationId: string): Promise<QuotationLineItem[]>;
@@ -159,6 +168,9 @@ export interface IStorage {
   createInvoice(companyId: string, invoice: InsertInvoice): Promise<Invoice>;
   updateInvoice(id: string, companyId: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined>;
   deleteInvoice(id: string, companyId: string): Promise<boolean>;
+  softDeleteInvoice(id: string, companyId: string): Promise<boolean>;
+  restoreInvoice(id: string, companyId: string): Promise<boolean>;
+  getDeletedInvoices(companyId: string): Promise<Invoice[]>;
   
   // Invoice Line Item methods
   getInvoiceLineItems(invoiceId: string): Promise<InvoiceLineItem[]>;
@@ -174,6 +186,9 @@ export interface IStorage {
   createAccountsReceivable(companyId: string, ar: InsertAccountsReceivable): Promise<AccountsReceivable>;
   updateAccountsReceivable(id: string, companyId: string, ar: Partial<InsertAccountsReceivable>): Promise<AccountsReceivable | undefined>;
   deleteAccountsReceivable(id: string, companyId: string): Promise<boolean>;
+  softDeleteAccountsReceivable(id: string, companyId: string): Promise<boolean>;
+  restoreAccountsReceivable(id: string, companyId: string): Promise<boolean>;
+  getDeletedAccountsReceivables(companyId: string): Promise<AccountsReceivable[]>;
   
   // AR Payment methods
   getArPayments(arId: string): Promise<ArPayment[]>;
@@ -188,6 +203,9 @@ export interface IStorage {
   createOperationalExpense(companyId: string, expense: InsertOperationalExpense): Promise<OperationalExpense>;
   updateOperationalExpense(id: string, companyId: string, expense: Partial<InsertOperationalExpense>): Promise<OperationalExpense | undefined>;
   deleteOperationalExpense(id: string, companyId: string): Promise<boolean>;
+  softDeleteOperationalExpense(id: string, companyId: string): Promise<boolean>;
+  restoreOperationalExpense(id: string, companyId: string): Promise<boolean>;
+  getDeletedOperationalExpenses(companyId: string): Promise<OperationalExpense[]>;
   
   // Sales Entry methods
   getSalesEntries(companyId: string): Promise<SalesEntry[]>;
@@ -196,6 +214,9 @@ export interface IStorage {
   createSalesEntry(companyId: string, entry: InsertSalesEntry): Promise<SalesEntry>;
   updateSalesEntry(id: string, companyId: string, entry: Partial<InsertSalesEntry>): Promise<SalesEntry | undefined>;
   deleteSalesEntry(id: string, companyId: string): Promise<boolean>;
+  softDeleteSalesEntry(id: string, companyId: string): Promise<boolean>;
+  restoreSalesEntry(id: string, companyId: string): Promise<boolean>;
+  getDeletedSalesEntries(companyId: string): Promise<SalesEntry[]>;
   
   // Purchase Order methods
   getPurchaseOrders(companyId: string): Promise<PurchaseOrder[]>;
@@ -203,6 +224,9 @@ export interface IStorage {
   createPurchaseOrder(companyId: string, po: InsertPurchaseOrder): Promise<PurchaseOrder>;
   updatePurchaseOrder(id: string, companyId: string, po: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder | undefined>;
   deletePurchaseOrder(id: string, companyId: string): Promise<boolean>;
+  softDeletePurchaseOrder(id: string, companyId: string): Promise<boolean>;
+  restorePurchaseOrder(id: string, companyId: string): Promise<boolean>;
+  getDeletedPurchaseOrders(companyId: string): Promise<PurchaseOrder[]>;
   
   // Purchase Order Item methods
   getAllPurchaseOrderItems(companyId: string): Promise<PurchaseOrderItem[]>;
@@ -219,6 +243,9 @@ export interface IStorage {
   createAccountsPayable(companyId: string, ap: InsertAccountsPayable): Promise<AccountsPayable>;
   updateAccountsPayable(id: string, companyId: string, ap: Partial<InsertAccountsPayable>): Promise<AccountsPayable | undefined>;
   deleteAccountsPayable(id: string, companyId: string): Promise<boolean>;
+  softDeleteAccountsPayable(id: string, companyId: string): Promise<boolean>;
+  restoreAccountsPayable(id: string, companyId: string): Promise<boolean>;
+  getDeletedAccountsPayables(companyId: string): Promise<AccountsPayable[]>;
   
   // Notification methods
   getNotifications(userId: string, companyId: string): Promise<Notification[]>;
@@ -399,14 +426,14 @@ export class DbStorage implements IStorage {
   // Client methods
   async getClients(companyId: string): Promise<Client[]> {
     const result = await db.select().from(clients)
-      .where(eq(clients.companyId, companyId))
+      .where(and(eq(clients.companyId, companyId), isNull(clients.deletedAt)))
       .orderBy(desc(clients.dateCreated));
     return result;
   }
 
   async getClient(id: string, companyId: string): Promise<Client | undefined> {
     const result = await db.select().from(clients)
-      .where(and(eq(clients.id, id), eq(clients.companyId, companyId)));
+      .where(and(eq(clients.id, id), eq(clients.companyId, companyId), isNull(clients.deletedAt)));
     return result[0];
   }
 
@@ -439,17 +466,39 @@ export class DbStorage implements IStorage {
     return result.length > 0;
   }
 
+  async softDeleteClient(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(clients)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(clients.id, id), eq(clients.companyId, companyId), isNull(clients.deletedAt)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async restoreClient(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(clients)
+      .set({ deletedAt: null })
+      .where(and(eq(clients.id, id), eq(clients.companyId, companyId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getDeletedClients(companyId: string): Promise<Client[]> {
+    return await db.select().from(clients)
+      .where(and(eq(clients.companyId, companyId), isNotNull(clients.deletedAt)))
+      .orderBy(desc(clients.deletedAt));
+  }
+
   // Service Report methods
   async getServiceReports(companyId: string): Promise<ServiceReport[]> {
     const result = await db.select().from(serviceReports)
-      .where(eq(serviceReports.companyId, companyId))
+      .where(and(eq(serviceReports.companyId, companyId), isNull(serviceReports.deletedAt)))
       .orderBy(desc(serviceReports.dateCreated));
     return result;
   }
 
   async getServiceReport(id: string, companyId: string): Promise<ServiceReport | undefined> {
     const result = await db.select().from(serviceReports)
-      .where(and(eq(serviceReports.id, id), eq(serviceReports.companyId, companyId)));
+      .where(and(eq(serviceReports.id, id), eq(serviceReports.companyId, companyId), isNull(serviceReports.deletedAt)));
     return result[0];
   }
 
@@ -457,7 +506,7 @@ export class DbStorage implements IStorage {
     const result = await db
       .select()
       .from(serviceReports)
-      .where(and(eq(serviceReports.clientId, clientId), eq(serviceReports.companyId, companyId)))
+      .where(and(eq(serviceReports.clientId, clientId), eq(serviceReports.companyId, companyId), isNull(serviceReports.deletedAt)))
       .orderBy(desc(serviceReports.dateCreated));
     return result;
   }
@@ -513,6 +562,28 @@ export class DbStorage implements IStorage {
       .where(and(eq(serviceReports.id, id), eq(serviceReports.companyId, companyId)))
       .returning();
     return result.length > 0;
+  }
+
+  async softDeleteServiceReport(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(serviceReports)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(serviceReports.id, id), eq(serviceReports.companyId, companyId), isNull(serviceReports.deletedAt)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async restoreServiceReport(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(serviceReports)
+      .set({ deletedAt: null })
+      .where(and(eq(serviceReports.id, id), eq(serviceReports.companyId, companyId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getDeletedServiceReports(companyId: string): Promise<ServiceReport[]> {
+    return await db.select().from(serviceReports)
+      .where(and(eq(serviceReports.companyId, companyId), isNotNull(serviceReports.deletedAt)))
+      .orderBy(desc(serviceReports.deletedAt));
   }
 
   // Service Line Item methods
@@ -630,14 +701,14 @@ export class DbStorage implements IStorage {
   // Quotation methods
   async getQuotations(companyId: string): Promise<Quotation[]> {
     const result = await db.select().from(quotations)
-      .where(eq(quotations.companyId, companyId))
+      .where(and(eq(quotations.companyId, companyId), isNull(quotations.deletedAt)))
       .orderBy(desc(quotations.dateCreated));
     return result;
   }
 
   async getQuotation(id: string, companyId: string): Promise<Quotation | undefined> {
     const result = await db.select().from(quotations)
-      .where(and(eq(quotations.id, id), eq(quotations.companyId, companyId)));
+      .where(and(eq(quotations.id, id), eq(quotations.companyId, companyId), isNull(quotations.deletedAt)));
     return result[0];
   }
 
@@ -645,7 +716,7 @@ export class DbStorage implements IStorage {
     const result = await db
       .select()
       .from(quotations)
-      .where(and(eq(quotations.clientId, clientId), eq(quotations.companyId, companyId)))
+      .where(and(eq(quotations.clientId, clientId), eq(quotations.companyId, companyId), isNull(quotations.deletedAt)))
       .orderBy(desc(quotations.dateCreated));
     return result;
   }
@@ -703,6 +774,28 @@ export class DbStorage implements IStorage {
     return result.length > 0;
   }
 
+  async softDeleteQuotation(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(quotations)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(quotations.id, id), eq(quotations.companyId, companyId), isNull(quotations.deletedAt)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async restoreQuotation(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(quotations)
+      .set({ deletedAt: null })
+      .where(and(eq(quotations.id, id), eq(quotations.companyId, companyId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getDeletedQuotations(companyId: string): Promise<Quotation[]> {
+    return await db.select().from(quotations)
+      .where(and(eq(quotations.companyId, companyId), isNotNull(quotations.deletedAt)))
+      .orderBy(desc(quotations.deletedAt));
+  }
+
   // Quotation Line Item methods
   async getQuotationLineItems(quotationId: string): Promise<QuotationLineItem[]> {
     const result = await db
@@ -744,14 +837,14 @@ export class DbStorage implements IStorage {
   // Invoice methods
   async getInvoices(companyId: string): Promise<Invoice[]> {
     const result = await db.select().from(invoices)
-      .where(eq(invoices.companyId, companyId))
+      .where(and(eq(invoices.companyId, companyId), isNull(invoices.deletedAt)))
       .orderBy(desc(invoices.dateCreated));
     return result;
   }
 
   async getInvoice(id: string, companyId: string): Promise<Invoice | undefined> {
     const result = await db.select().from(invoices)
-      .where(and(eq(invoices.id, id), eq(invoices.companyId, companyId)));
+      .where(and(eq(invoices.id, id), eq(invoices.companyId, companyId), isNull(invoices.deletedAt)));
     return result[0];
   }
 
@@ -759,7 +852,7 @@ export class DbStorage implements IStorage {
     const result = await db
       .select()
       .from(invoices)
-      .where(and(eq(invoices.clientId, clientId), eq(invoices.companyId, companyId)))
+      .where(and(eq(invoices.clientId, clientId), eq(invoices.companyId, companyId), isNull(invoices.deletedAt)))
       .orderBy(desc(invoices.dateCreated));
     return result;
   }
@@ -814,6 +907,28 @@ export class DbStorage implements IStorage {
     return result.length > 0;
   }
 
+  async softDeleteInvoice(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(invoices)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(invoices.id, id), eq(invoices.companyId, companyId), isNull(invoices.deletedAt)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async restoreInvoice(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(invoices)
+      .set({ deletedAt: null })
+      .where(and(eq(invoices.id, id), eq(invoices.companyId, companyId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getDeletedInvoices(companyId: string): Promise<Invoice[]> {
+    return await db.select().from(invoices)
+      .where(and(eq(invoices.companyId, companyId), isNotNull(invoices.deletedAt)))
+      .orderBy(desc(invoices.deletedAt));
+  }
+
   // Invoice Line Item methods
   async getInvoiceLineItems(invoiceId: string): Promise<InvoiceLineItem[]> {
     const result = await db
@@ -855,14 +970,14 @@ export class DbStorage implements IStorage {
   // Accounts Receivable methods
   async getAccountsReceivables(companyId: string): Promise<AccountsReceivable[]> {
     const result = await db.select().from(accountsReceivables)
-      .where(eq(accountsReceivables.companyId, companyId))
+      .where(and(eq(accountsReceivables.companyId, companyId), isNull(accountsReceivables.deletedAt)))
       .orderBy(desc(accountsReceivables.date));
     return result;
   }
 
   async getAccountsReceivable(id: string, companyId: string): Promise<AccountsReceivable | undefined> {
     const result = await db.select().from(accountsReceivables)
-      .where(and(eq(accountsReceivables.id, id), eq(accountsReceivables.companyId, companyId)));
+      .where(and(eq(accountsReceivables.id, id), eq(accountsReceivables.companyId, companyId), isNull(accountsReceivables.deletedAt)));
     return result[0];
   }
 
@@ -870,7 +985,7 @@ export class DbStorage implements IStorage {
     const result = await db
       .select()
       .from(accountsReceivables)
-      .where(and(eq(accountsReceivables.clientId, clientId), eq(accountsReceivables.companyId, companyId)))
+      .where(and(eq(accountsReceivables.clientId, clientId), eq(accountsReceivables.companyId, companyId), isNull(accountsReceivables.deletedAt)))
       .orderBy(desc(accountsReceivables.date));
     return result;
   }
@@ -906,6 +1021,28 @@ export class DbStorage implements IStorage {
       .where(and(eq(accountsReceivables.id, id), eq(accountsReceivables.companyId, companyId)))
       .returning();
     return result.length > 0;
+  }
+
+  async softDeleteAccountsReceivable(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(accountsReceivables)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(accountsReceivables.id, id), eq(accountsReceivables.companyId, companyId), isNull(accountsReceivables.deletedAt)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async restoreAccountsReceivable(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(accountsReceivables)
+      .set({ deletedAt: null })
+      .where(and(eq(accountsReceivables.id, id), eq(accountsReceivables.companyId, companyId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getDeletedAccountsReceivables(companyId: string): Promise<AccountsReceivable[]> {
+    return await db.select().from(accountsReceivables)
+      .where(and(eq(accountsReceivables.companyId, companyId), isNotNull(accountsReceivables.deletedAt)))
+      .orderBy(desc(accountsReceivables.deletedAt));
   }
 
   // AR Payment methods
@@ -945,14 +1082,14 @@ export class DbStorage implements IStorage {
   // Operational Expense methods
   async getOperationalExpenses(companyId: string): Promise<OperationalExpense[]> {
     const result = await db.select().from(operationalExpenses)
-      .where(eq(operationalExpenses.companyId, companyId))
+      .where(and(eq(operationalExpenses.companyId, companyId), isNull(operationalExpenses.deletedAt)))
       .orderBy(desc(operationalExpenses.date));
     return result;
   }
 
   async getOperationalExpense(id: string, companyId: string): Promise<OperationalExpense | undefined> {
     const result = await db.select().from(operationalExpenses)
-      .where(and(eq(operationalExpenses.id, id), eq(operationalExpenses.companyId, companyId)));
+      .where(and(eq(operationalExpenses.id, id), eq(operationalExpenses.companyId, companyId), isNull(operationalExpenses.deletedAt)));
     return result[0];
   }
 
@@ -983,22 +1120,44 @@ export class DbStorage implements IStorage {
     return result.length > 0;
   }
 
+  async softDeleteOperationalExpense(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(operationalExpenses)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(operationalExpenses.id, id), eq(operationalExpenses.companyId, companyId), isNull(operationalExpenses.deletedAt)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async restoreOperationalExpense(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(operationalExpenses)
+      .set({ deletedAt: null })
+      .where(and(eq(operationalExpenses.id, id), eq(operationalExpenses.companyId, companyId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getDeletedOperationalExpenses(companyId: string): Promise<OperationalExpense[]> {
+    return await db.select().from(operationalExpenses)
+      .where(and(eq(operationalExpenses.companyId, companyId), isNotNull(operationalExpenses.deletedAt)))
+      .orderBy(desc(operationalExpenses.deletedAt));
+  }
+
   // Sales Entry methods
   async getSalesEntries(companyId: string): Promise<SalesEntry[]> {
     const result = await db.select().from(salesEntries)
-      .where(eq(salesEntries.companyId, companyId))
+      .where(and(eq(salesEntries.companyId, companyId), isNull(salesEntries.deletedAt)))
       .orderBy(desc(salesEntries.date));
     return result;
   }
 
   async getSalesEntriesBySource(sourceType: string, sourceId: string, companyId: string): Promise<SalesEntry[]> {
     return await db.select().from(salesEntries)
-      .where(and(eq(salesEntries.sourceType, sourceType), eq(salesEntries.sourceId, sourceId), eq(salesEntries.companyId, companyId)));
+      .where(and(eq(salesEntries.sourceType, sourceType), eq(salesEntries.sourceId, sourceId), eq(salesEntries.companyId, companyId), isNull(salesEntries.deletedAt)));
   }
 
   async getSalesEntry(id: string, companyId: string): Promise<SalesEntry | undefined> {
     const result = await db.select().from(salesEntries)
-      .where(and(eq(salesEntries.id, id), eq(salesEntries.companyId, companyId)));
+      .where(and(eq(salesEntries.id, id), eq(salesEntries.companyId, companyId), isNull(salesEntries.deletedAt)));
     return result[0];
   }
 
@@ -1029,17 +1188,39 @@ export class DbStorage implements IStorage {
     return result.length > 0;
   }
 
+  async softDeleteSalesEntry(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(salesEntries)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(salesEntries.id, id), eq(salesEntries.companyId, companyId), isNull(salesEntries.deletedAt)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async restoreSalesEntry(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(salesEntries)
+      .set({ deletedAt: null })
+      .where(and(eq(salesEntries.id, id), eq(salesEntries.companyId, companyId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getDeletedSalesEntries(companyId: string): Promise<SalesEntry[]> {
+    return await db.select().from(salesEntries)
+      .where(and(eq(salesEntries.companyId, companyId), isNotNull(salesEntries.deletedAt)))
+      .orderBy(desc(salesEntries.deletedAt));
+  }
+
   // Purchase Order methods
   async getPurchaseOrders(companyId: string): Promise<PurchaseOrder[]> {
     const result = await db.select().from(purchaseOrders)
-      .where(eq(purchaseOrders.companyId, companyId))
+      .where(and(eq(purchaseOrders.companyId, companyId), isNull(purchaseOrders.deletedAt)))
       .orderBy(desc(purchaseOrders.date));
     return result;
   }
 
   async getPurchaseOrder(id: string, companyId: string): Promise<PurchaseOrder | undefined> {
     const result = await db.select().from(purchaseOrders)
-      .where(and(eq(purchaseOrders.id, id), eq(purchaseOrders.companyId, companyId)));
+      .where(and(eq(purchaseOrders.id, id), eq(purchaseOrders.companyId, companyId), isNull(purchaseOrders.deletedAt)));
     return result[0];
   }
 
@@ -1089,6 +1270,28 @@ export class DbStorage implements IStorage {
       .where(and(eq(purchaseOrders.id, id), eq(purchaseOrders.companyId, companyId)))
       .returning();
     return result.length > 0;
+  }
+
+  async softDeletePurchaseOrder(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(purchaseOrders)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(purchaseOrders.id, id), eq(purchaseOrders.companyId, companyId), isNull(purchaseOrders.deletedAt)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async restorePurchaseOrder(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(purchaseOrders)
+      .set({ deletedAt: null })
+      .where(and(eq(purchaseOrders.id, id), eq(purchaseOrders.companyId, companyId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getDeletedPurchaseOrders(companyId: string): Promise<PurchaseOrder[]> {
+    return await db.select().from(purchaseOrders)
+      .where(and(eq(purchaseOrders.companyId, companyId), isNotNull(purchaseOrders.deletedAt)))
+      .orderBy(desc(purchaseOrders.deletedAt));
   }
 
   // Purchase Order Item methods
@@ -1150,14 +1353,14 @@ export class DbStorage implements IStorage {
   // Accounts Payable methods
   async getAccountsPayables(companyId: string): Promise<AccountsPayable[]> {
     const result = await db.select().from(accountsPayables)
-      .where(eq(accountsPayables.companyId, companyId))
+      .where(and(eq(accountsPayables.companyId, companyId), isNull(accountsPayables.deletedAt)))
       .orderBy(desc(accountsPayables.date));
     return result;
   }
 
   async getAccountsPayable(id: string, companyId: string): Promise<AccountsPayable | undefined> {
     const result = await db.select().from(accountsPayables)
-      .where(and(eq(accountsPayables.id, id), eq(accountsPayables.companyId, companyId)));
+      .where(and(eq(accountsPayables.id, id), eq(accountsPayables.companyId, companyId), isNull(accountsPayables.deletedAt)));
     return result[0];
   }
 
@@ -1165,7 +1368,7 @@ export class DbStorage implements IStorage {
     const result = await db
       .select()
       .from(accountsPayables)
-      .where(and(eq(accountsPayables.purchaseOrderId, purchaseOrderId), eq(accountsPayables.companyId, companyId)))
+      .where(and(eq(accountsPayables.purchaseOrderId, purchaseOrderId), eq(accountsPayables.companyId, companyId), isNull(accountsPayables.deletedAt)))
       .orderBy(desc(accountsPayables.date));
     return result;
   }
@@ -1204,6 +1407,28 @@ export class DbStorage implements IStorage {
       .where(and(eq(accountsPayables.id, id), eq(accountsPayables.companyId, companyId)))
       .returning();
     return result.length > 0;
+  }
+
+  async softDeleteAccountsPayable(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(accountsPayables)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(accountsPayables.id, id), eq(accountsPayables.companyId, companyId), isNull(accountsPayables.deletedAt)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async restoreAccountsPayable(id: string, companyId: string): Promise<boolean> {
+    const result = await db.update(accountsPayables)
+      .set({ deletedAt: null })
+      .where(and(eq(accountsPayables.id, id), eq(accountsPayables.companyId, companyId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getDeletedAccountsPayables(companyId: string): Promise<AccountsPayable[]> {
+    return await db.select().from(accountsPayables)
+      .where(and(eq(accountsPayables.companyId, companyId), isNotNull(accountsPayables.deletedAt)))
+      .orderBy(desc(accountsPayables.deletedAt));
   }
 
   // Notification methods

@@ -84,6 +84,7 @@ export const clients = pgTable("clients", {
   totalValue: integer("total_value").default(0),
   status: text("status").notNull().default("active"), // active, inactive, pending
   dateCreated: timestamp("date_created").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 });
 
 export const serviceReports = pgTable("service_reports", {
@@ -118,6 +119,7 @@ export const serviceReports = pgTable("service_reports", {
   // Metadata
   dateCreated: timestamp("date_created").defaultNow(),
   lastModified: timestamp("last_modified").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 }, (table) => ({
   companyReportNumberUnique: uniqueIndex("service_reports_company_report_number_unique").on(table.companyId, table.reportNumber),
 }));
@@ -180,6 +182,7 @@ export const quotations = pgTable("quotations", {
   // Metadata
   dateCreated: timestamp("date_created").defaultNow(),
   lastModified: timestamp("last_modified").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 }, (table) => ({
   companyQuotationNumberUnique: uniqueIndex("quotations_company_quotation_number_unique").on(table.companyId, table.quotationNumber),
 }));
@@ -220,6 +223,7 @@ export const invoices = pgTable("invoices", {
   // Metadata
   dateCreated: timestamp("date_created").defaultNow(),
   lastModified: timestamp("last_modified").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 }, (table) => ({
   companyInvoiceNumberUnique: uniqueIndex("invoices_company_invoice_number_unique").on(table.companyId, table.invoiceNumber),
 }));
@@ -269,6 +273,7 @@ export const accountsReceivables = pgTable("accounts_receivables", {
   // Metadata
   dateCreated: timestamp("date_created").defaultNow(),
   lastModified: timestamp("last_modified").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 }, (table) => ({
   companyArNumberUnique: uniqueIndex("accounts_receivables_company_ar_number_unique").on(table.companyId, table.arNumber),
 }));
@@ -308,6 +313,7 @@ export const operationalExpenses = pgTable("operational_expenses", {
   
   // Metadata
   dateCreated: timestamp("date_created").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 });
 
 export const salesEntries = pgTable("sales_entries", {
@@ -328,6 +334,7 @@ export const salesEntries = pgTable("sales_entries", {
   
   // Metadata
   dateCreated: timestamp("date_created").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 });
 
 export const notifications = pgTable("notifications", {
@@ -565,6 +572,7 @@ export const purchaseOrders = pgTable("purchase_orders", {
   // Metadata
   dateCreated: timestamp("date_created").defaultNow(),
   lastModified: timestamp("last_modified").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 }, (table) => ({
   companyPoNumberUnique: uniqueIndex("purchase_orders_company_po_number_unique").on(table.companyId, table.poNumber),
 }));
@@ -614,6 +622,7 @@ export const accountsPayables = pgTable("accounts_payables", {
   // Metadata
   dateCreated: timestamp("date_created").defaultNow(),
   lastModified: timestamp("last_modified").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 }, (table) => ({
   companyApNumberUnique: uniqueIndex("accounts_payables_company_ap_number_unique").on(table.companyId, table.apNumber),
 }));

@@ -29,6 +29,7 @@ import SuperAdminCompanies from "@/pages/SuperAdminCompanies";
 import NotificationCenter from "@/pages/NotificationCenter";
 import ActivityFeed from "@/pages/ActivityFeed";
 import AuditTrail from "@/pages/AuditTrail";
+import RecycleBin from "@/pages/RecycleBin";
 import NotFound from "@/pages/not-found";
 import { useEffect } from "react";
 
@@ -94,6 +95,9 @@ function ProtectedRoutes() {
       <Route path="/activity-feed" component={ActivityFeed} />
       <Route path="/audit-trail">
         <AdminRoute component={AuditTrail} />
+      </Route>
+      <Route path="/recycle-bin">
+        <AdminRoute component={RecycleBin} />
       </Route>
       <Route path="/settings" component={Settings} />
       <Route path="/profile" component={Profile} />

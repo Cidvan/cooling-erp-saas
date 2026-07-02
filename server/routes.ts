@@ -496,24 +496,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.getAccountsReceivablesByClientId(req.params.id, companyId),
       ]);
 
-      // Delete service reports (each also deletes its line items, technicians, AC units)
+      // Soft delete service reports, quotations, invoices, and accounts receivables
       for (const report of clientReports) {
-        await storage.deleteServiceReport(report.id, companyId);
+        await storage.softDeleteServiceReport(report.id, companyId);
       }
-      // Delete quotations (each also deletes its line items)
       for (const quotation of clientQuotations) {
-        await storage.deleteQuotation(quotation.id, companyId);
+        await storage.softDeleteQuotation(quotation.id, companyId);
       }
-      // Delete invoices (each also deletes its line items)
       for (const invoice of clientInvoices) {
-        await storage.deleteInvoice(invoice.id, companyId);
+        await storage.softDeleteInvoice(invoice.id, companyId);
       }
-      // Delete accounts receivables
       for (const ar of clientARs) {
-        await storage.deleteAccountsReceivable(ar.id, companyId);
+        await storage.softDeleteAccountsReceivable(ar.id, companyId);
       }
 
-      const deleted = await storage.deleteClient(req.params.id, companyId);
+      const deleted = await storage.softDeleteClient(req.params.id, companyId);
       if (!deleted) {
         return res.status(404).json({ error: "Client not found" });
       }
@@ -779,7 +776,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const companyId = req.session.companyId!;
       const existing = await storage.getServiceReport(req.params.id, companyId);
-      const deleted = await storage.deleteServiceReport(req.params.id, companyId);
+      const deleted = await storage.softDeleteServiceReport(req.params.id, companyId);
       if (!deleted) {
         return res.status(404).json({ error: "Service report not found" });
       }
@@ -992,7 +989,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/quotations/:id", async (req, res) => {
     try {
-      const deleted = await storage.deleteQuotation(req.params.id, req.session.companyId!);
+      const deleted = await storage.softDeleteQuotation(req.params.id, req.session.companyId!);
       if (!deleted) {
         return res.status(404).json({ error: "Quotation not found" });
       }
@@ -1575,7 +1572,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const companyId = req.session.companyId!;
       const ar = await storage.getAccountsReceivable(req.params.id, companyId);
-      const success = await storage.deleteAccountsReceivable(req.params.id, companyId);
+      const success = await storage.softDeleteAccountsReceivable(req.params.id, companyId);
       if (!success) {
         return res.status(404).json({ error: "Accounts receivable not found" });
       }
@@ -1641,7 +1638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const companyId = req.session.companyId!;
       const expense = await storage.getOperationalExpense(req.params.id, companyId);
-      const success = await storage.deleteOperationalExpense(req.params.id, companyId);
+      const success = await storage.softDeleteOperationalExpense(req.params.id, companyId);
       if (!success) {
         return res.status(404).json({ error: "Operational expense not found" });
       }
@@ -1707,7 +1704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const companyId = req.session.companyId!;
       const entry = await storage.getSalesEntry(req.params.id, companyId);
-      const success = await storage.deleteSalesEntry(req.params.id, companyId);
+      const success = await storage.softDeleteSalesEntry(req.params.id, companyId);
       if (!success) {
         return res.status(404).json({ error: "Sales entry not found" });
       }
@@ -1959,7 +1956,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/purchase-orders/:id", async (req, res) => {
     try {
-      const success = await storage.deletePurchaseOrder(req.params.id, req.session.companyId!);
+      const success = await storage.softDeletePurchaseOrder(req.params.id, req.session.companyId!);
       if (!success) {
         return res.status(404).json({ error: "Purchase order not found" });
       }
@@ -2139,13 +2136,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/accounts-payables/:id", async (req, res) => {
     try {
-      const success = await storage.deleteAccountsPayable(req.params.id, req.session.companyId!);
+      const success = await storage.softDeleteAccountsPayable(req.params.id, req.session.companyId!);
       if (!success) {
         return res.status(404).json({ error: "Accounts payable not found" });
       }
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete accounts payable" });
+    }
+  });
+
+  // Recycle Bin routes (owner/admin only)
+  const RECYCLE_BIN_ENTITY_CONFIG: Record<string, {
+    getDeleted: (companyId: string) => Promise<any[]>;
+    restore: (id: string, companyId: string) => Promise<boolean>;
+    permanentDelete: (id: string, companyId: string) => Promise<boolean>;
+    nameField: string;
+  }> = {
+    client: {
+      getDeleted: (companyId) => storage.getDeletedClients(companyId),
+      restore: (id, companyId) => storage.restoreClient(id, companyId),
+      permanentDelete: (id, companyId) => storage.deleteClient(id, companyId),
+      nameField: "name",
+    },
+    serviceReport: {
+      getDeleted: (companyId) => storage.getDeletedServiceReports(companyId),
+      restore: (id, companyId) => storage.restoreServiceReport(id, companyId),
+      permanentDelete: (id, companyId) => storage.deleteServiceReport(id, companyId),
+      nameField: "reportNumber",
+    },
+    quotation: {
+      getDeleted: (companyId) => storage.getDeletedQuotations(companyId),
+      restore: (id, companyId) => storage.restoreQuotation(id, companyId),
+      permanentDelete: (id, companyId) => storage.deleteQuotation(id, companyId),
+      nameField: "quotationNumber",
+    },
+    invoice: {
+      getDeleted: (companyId) => storage.getDeletedInvoices(companyId),
+      restore: (id, companyId) => storage.restoreInvoice(id, companyId),
+      permanentDelete: (id, companyId) => storage.deleteInvoice(id, companyId),
+      nameField: "invoiceNumber",
+    },
+    purchaseOrder: {
+      getDeleted: (companyId) => storage.getDeletedPurchaseOrders(companyId),
+      restore: (id, companyId) => storage.restorePurchaseOrder(id, companyId),
+      permanentDelete: (id, companyId) => storage.deletePurchaseOrder(id, companyId),
+      nameField: "poNumber",
+    },
+    accountsReceivable: {
+      getDeleted: (companyId) => storage.getDeletedAccountsReceivables(companyId),
+      restore: (id, companyId) => storage.restoreAccountsReceivable(id, companyId),
+      permanentDelete: (id, companyId) => storage.deleteAccountsReceivable(id, companyId),
+      nameField: "arNumber",
+    },
+    accountsPayable: {
+      getDeleted: (companyId) => storage.getDeletedAccountsPayables(companyId),
+      restore: (id, companyId) => storage.restoreAccountsPayable(id, companyId),
+      permanentDelete: (id, companyId) => storage.deleteAccountsPayable(id, companyId),
+      nameField: "apNumber",
+    },
+    salesEntry: {
+      getDeleted: (companyId) => storage.getDeletedSalesEntries(companyId),
+      restore: (id, companyId) => storage.restoreSalesEntry(id, companyId),
+      permanentDelete: (id, companyId) => storage.deleteSalesEntry(id, companyId),
+      nameField: "amount",
+    },
+    operationalExpense: {
+      getDeleted: (companyId) => storage.getDeletedOperationalExpenses(companyId),
+      restore: (id, companyId) => storage.restoreOperationalExpense(id, companyId),
+      permanentDelete: (id, companyId) => storage.deleteOperationalExpense(id, companyId),
+      nameField: "category",
+    },
+  };
+
+  app.get("/api/recycle-bin", requireCompany, requireRole("owner", "admin"), async (req, res) => {
+    try {
+      const companyId = req.session.companyId!;
+      const entries = await Promise.all(
+        Object.entries(RECYCLE_BIN_ENTITY_CONFIG).map(async ([entityType, config]) => {
+          const items = await config.getDeleted(companyId);
+          return items.map((item) => ({
+            entityType,
+            id: item.id,
+            name: item[config.nameField] ?? item.id,
+            deletedAt: item.deletedAt,
+          }));
+        })
+      );
+      res.json(entries.flat());
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch recycle bin items" });
+    }
+  });
+
+  app.post("/api/recycle-bin/:type/:id/restore", requireCompany, requireRole("owner", "admin"), async (req, res) => {
+    try {
+      const companyId = req.session.companyId!;
+      const config = RECYCLE_BIN_ENTITY_CONFIG[req.params.type];
+      if (!config) {
+        return res.status(400).json({ error: "Invalid entity type" });
+      }
+      const restored = await config.restore(req.params.id, companyId);
+      if (!restored) {
+        return res.status(404).json({ error: "Item not found in recycle bin" });
+      }
+      await logActivity(companyId, 'updated', req.params.type, req.params.id, req.params.id, `Restored ${req.params.type} from recycle bin`, req.session.userId, req.session.userName, req);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to restore item" });
+    }
+  });
+
+  app.delete("/api/recycle-bin/:type/:id/permanent", requireCompany, requireRole("owner", "admin"), async (req, res) => {
+    try {
+      const companyId = req.session.companyId!;
+      const config = RECYCLE_BIN_ENTITY_CONFIG[req.params.type];
+      if (!config) {
+        return res.status(400).json({ error: "Invalid entity type" });
+      }
+      const deleted = await config.permanentDelete(req.params.id, companyId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Item not found" });
+      }
+      await logActivity(companyId, 'deleted', req.params.type, req.params.id, req.params.id, `Permanently deleted ${req.params.type}`, req.session.userId, req.session.userName, req);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to permanently delete item" });
     }
   });
 
