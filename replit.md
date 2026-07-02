@@ -40,11 +40,13 @@ Preferred communication style: Simple, everyday language.
 - **Migrations**: Drizzle Kit.
 
 ### Design System
-- **Design Philosophy**: Fluent Design principles.
-- **Color Palette**: Professional blue primary colors with semantic status colors.
+- **Design Philosophy**: Modern premium SaaS aesthetic (Linear/Stripe/Vercel/Notion/Attio/Clerk-inspired), light theme only.
+- **Color Palette**: Flat light background (`#F8FAFC`), white cards/sidebar, soft slate-gray borders, dark slate text, single consistent indigo accent color (`#4F46E5`-family) used for primary actions, active nav states, links, and focus rings. Semantic badge colors (green/amber/blue/red) for status indicators.
 - **Typography**: Inter font family.
-- **Component Architecture**: Modular component system.
+- **Component Architecture**: Modular component system (shadcn/ui + Radix primitives), reused across all pages — presentation-only redesign with no business logic changes.
+- **Shadows & Radius**: Soft blur-based shadows (no hard offsets), larger corner radius (12px) for a more premium feel.
 - **Responsive Design**: Mobile-first approach with collapsible sidebar navigation.
+- **UI/UX Redesign (Phase 2, in progress)**: Full incremental visual redesign per detailed spec — presentation-only, no API/route/business-logic changes. Completed so far: design tokens (colors, shadows, radius) in `index.css`; redesigned sidebar (grouped nav, rounded active states) and topbar (search bar, cleaner icon buttons); redesigned dashboard summary cards (icon chip, large value, trend arrows); polished shared Table component (sticky header, uppercase labels, softer borders); added semantic Badge variants (success/warning/info) and applied them to Documents page status badges; removed legacy blue gradient page backgrounds and replaced one-off blue accents with the unified indigo accent across Purchase Orders, Accounts Receivables, Cash Flow, Quotations, Sales & Financial Dashboard, and Sales Tracking pages; standardized page headers (title + subtitle) across those pages. Remaining: Dashboard.tsx widget layout, per-page form/dialog polish, responsive/accessibility pass.
 
 ### Authentication and Authorization
 - **Authentication System**: Complete session-based authentication with landing page, login flow, and protected routes.
