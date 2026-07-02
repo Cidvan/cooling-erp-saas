@@ -271,15 +271,6 @@ export default function Quotations() {
       return;
     }
 
-    if (!quotation.quotationNumber?.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a quotation number",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!quotation.validUntil) {
       toast({
         title: "Error",

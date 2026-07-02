@@ -1143,8 +1143,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(201).json(invoice);
       }
-    } catch (error) {
-      res.status(400).json({ error: "Invalid invoice data", details: error });
+    } catch (error: any) {
+      console.error("POST /api/invoices error:", error?.message, error?.stack);
+      const message = error?.errors?.[0]?.message || error?.message || "Failed to save invoice";
+      res.status(400).json({ error: message });
     }
   });
 

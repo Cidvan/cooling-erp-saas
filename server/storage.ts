@@ -455,11 +455,11 @@ export class DbStorage implements IStorage {
     const reportNumber = insertReport.reportNumber?.trim()
       || await this.generateDocumentNumber(companyId, "serviceReport");
     
-    // Check if report number already exists
+    // Check if report number already exists for this company
     const existing = await db
       .select()
       .from(serviceReports)
-      .where(eq(serviceReports.reportNumber, reportNumber));
+      .where(and(eq(serviceReports.reportNumber, reportNumber), eq(serviceReports.companyId, companyId)));
     
     if (existing.length > 0) {
       throw new Error(`Report number ${reportNumber} already exists`);
@@ -641,7 +641,17 @@ export class DbStorage implements IStorage {
 
   async createQuotation(companyId: string, insertQuotation: InsertQuotation): Promise<Quotation> {
     const now = new Date();
-    const quotationNumber = insertQuotation.quotationNumber || await this.generateDocumentNumber(companyId, "quotation");
+    const quotationNumber = insertQuotation.quotationNumber?.trim() || await this.generateDocumentNumber(companyId, "quotation");
+    
+    // Check if quotation number already exists for this company
+    const existingQuotation = await db
+      .select()
+      .from(quotations)
+      .where(and(eq(quotations.quotationNumber, quotationNumber), eq(quotations.companyId, companyId)));
+    
+    if (existingQuotation.length > 0) {
+      throw new Error(`Quotation number ${quotationNumber} already exists`);
+    }
     
     const [quotation] = await db.insert(quotations).values({
       ...insertQuotation,
@@ -745,7 +755,17 @@ export class DbStorage implements IStorage {
 
   async createInvoice(companyId: string, insertInvoice: InsertInvoice): Promise<Invoice> {
     const now = new Date();
-    const invoiceNumber = insertInvoice.invoiceNumber || await this.generateDocumentNumber(companyId, "invoice");
+    const invoiceNumber = insertInvoice.invoiceNumber?.trim() || await this.generateDocumentNumber(companyId, "invoice");
+    
+    // Check if invoice number already exists for this company
+    const existingInvoice = await db
+      .select()
+      .from(invoices)
+      .where(and(eq(invoices.invoiceNumber, invoiceNumber), eq(invoices.companyId, companyId)));
+    
+    if (existingInvoice.length > 0) {
+      throw new Error(`Invoice number ${invoiceNumber} already exists`);
+    }
     
     const [invoice] = await db.insert(invoices).values({
       companyId,

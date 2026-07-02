@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, decimal, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, decimal, boolean, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -91,8 +91,8 @@ export const serviceReports = pgTable("service_reports", {
   companyId: varchar("company_id").notNull(),
   clientId: varchar("client_id").notNull(),
   
-  // Service Report Number
-  reportNumber: text("report_number").notNull().unique(),
+  // Service Report Number (unique per company, not globally)
+  reportNumber: text("report_number").notNull(),
   
   // Service Summary
   serviceDate: timestamp("service_date").notNull(),
@@ -118,7 +118,9 @@ export const serviceReports = pgTable("service_reports", {
   // Metadata
   dateCreated: timestamp("date_created").defaultNow(),
   lastModified: timestamp("last_modified").defaultNow(),
-});
+}, (table) => ({
+  companyReportNumberUnique: uniqueIndex("service_reports_company_report_number_unique").on(table.companyId, table.reportNumber),
+}));
 
 export const serviceLineItems = pgTable("service_line_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -156,8 +158,8 @@ export const quotations = pgTable("quotations", {
   companyId: varchar("company_id").notNull(),
   clientId: varchar("client_id").notNull(),
   
-  // Quotation Basic Info
-  quotationNumber: text("quotation_number").notNull().unique(),
+  // Quotation Basic Info (unique per company, not globally)
+  quotationNumber: text("quotation_number").notNull(),
   quotationDate: timestamp("quotation_date").notNull(),
   validUntil: timestamp("valid_until").notNull(),
   status: text("status").notNull().default("draft"), // draft, sent, accepted, rejected, expired
@@ -178,7 +180,9 @@ export const quotations = pgTable("quotations", {
   // Metadata
   dateCreated: timestamp("date_created").defaultNow(),
   lastModified: timestamp("last_modified").defaultNow(),
-});
+}, (table) => ({
+  companyQuotationNumberUnique: uniqueIndex("quotations_company_quotation_number_unique").on(table.companyId, table.quotationNumber),
+}));
 
 export const quotationLineItems = pgTable("quotation_line_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -196,8 +200,8 @@ export const invoices = pgTable("invoices", {
   clientId: varchar("client_id").notNull(),
   quotationId: varchar("quotation_id"), // reference to original quotation (optional)
   
-  // Invoice Basic Info
-  invoiceNumber: text("invoice_number").notNull().unique(),
+  // Invoice Basic Info (unique per company, not globally)
+  invoiceNumber: text("invoice_number").notNull(),
   invoiceDate: timestamp("invoice_date").notNull(),
   dueDate: timestamp("due_date").notNull(),
   status: text("status").notNull().default("unpaid"), // unpaid, paid, overdue, cancelled
@@ -216,7 +220,9 @@ export const invoices = pgTable("invoices", {
   // Metadata
   dateCreated: timestamp("date_created").defaultNow(),
   lastModified: timestamp("last_modified").defaultNow(),
-});
+}, (table) => ({
+  companyInvoiceNumberUnique: uniqueIndex("invoices_company_invoice_number_unique").on(table.companyId, table.invoiceNumber),
+}));
 
 export const invoiceLineItems = pgTable("invoice_line_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -232,8 +238,8 @@ export const accountsReceivables = pgTable("accounts_receivables", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   companyId: varchar("company_id").notNull(),
   
-  // AR Number (auto-generated)
-  arNumber: text("ar_number").notNull().unique(),
+  // AR Number (auto-generated, unique per company)
+  arNumber: text("ar_number").notNull(),
   
   // Basic Information
   date: timestamp("date").notNull(),
@@ -263,7 +269,9 @@ export const accountsReceivables = pgTable("accounts_receivables", {
   // Metadata
   dateCreated: timestamp("date_created").defaultNow(),
   lastModified: timestamp("last_modified").defaultNow(),
-});
+}, (table) => ({
+  companyArNumberUnique: uniqueIndex("accounts_receivables_company_ar_number_unique").on(table.companyId, table.arNumber),
+}));
 
 export const arPayments = pgTable("ar_payments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -455,6 +463,7 @@ export const insertQuotationSchema = createInsertSchema(quotations).omit({
   lastModified: true,
 }).extend({
   // Handle date strings from JSON by coercing them to Date objects
+  quotationNumber: z.string().optional(),
   quotationDate: z.coerce.date().optional(),
   validUntil: z.coerce.date().optional(),
   title: z.string().optional(),
@@ -471,6 +480,7 @@ export const insertInvoiceSchema = createInsertSchema(invoices).omit({
   lastModified: true,
 }).extend({
   // Handle date strings from JSON by coercing them to Date objects
+  invoiceNumber: z.string().optional(),
   invoiceDate: z.coerce.date().optional(),
   dueDate: z.coerce.date().optional(),
   title: z.string().optional(),
@@ -523,8 +533,8 @@ export const purchaseOrders = pgTable("purchase_orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   companyId: varchar("company_id").notNull(),
   
-  // PO Number (auto-generated)
-  poNumber: text("po_number").notNull().unique(),
+  // PO Number (auto-generated, unique per company)
+  poNumber: text("po_number").notNull(),
   
   // Basic Information
   date: timestamp("date").notNull(),
@@ -544,7 +554,9 @@ export const purchaseOrders = pgTable("purchase_orders", {
   // Metadata
   dateCreated: timestamp("date_created").defaultNow(),
   lastModified: timestamp("last_modified").defaultNow(),
-});
+}, (table) => ({
+  companyPoNumberUnique: uniqueIndex("purchase_orders_company_po_number_unique").on(table.companyId, table.poNumber),
+}));
 
 export const purchaseOrderItems = pgTable("purchase_order_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -560,8 +572,8 @@ export const accountsPayables = pgTable("accounts_payables", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   companyId: varchar("company_id").notNull(),
   
-  // AP Number (auto-generated)
-  apNumber: text("ap_number").notNull().unique(),
+  // AP Number (auto-generated, unique per company)
+  apNumber: text("ap_number").notNull(),
   
   // Basic Information
   date: timestamp("date").notNull(),
@@ -591,7 +603,9 @@ export const accountsPayables = pgTable("accounts_payables", {
   // Metadata
   dateCreated: timestamp("date_created").defaultNow(),
   lastModified: timestamp("last_modified").defaultNow(),
-});
+}, (table) => ({
+  companyApNumberUnique: uniqueIndex("accounts_payables_company_ap_number_unique").on(table.companyId, table.apNumber),
+}));
 
 export const insertPurchaseOrderSchema = createInsertSchema(purchaseOrders).omit({
   id: true,
