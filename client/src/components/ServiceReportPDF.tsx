@@ -111,9 +111,10 @@ interface ServiceReportPDFProps {
   technicians?: ServiceTechnician[];
   acUnits?: ServiceAcUnit[];
   companyName?: string;
+  currencySymbol?: string;
 }
 
-export function ServiceReportPDFDocument({ serviceReport, client, lineItems = [], technicians = [], acUnits = [], companyName }: ServiceReportPDFProps) {
+export function ServiceReportPDFDocument({ serviceReport, client, lineItems = [], technicians = [], acUnits = [], companyName, currencySymbol = "₱" }: ServiceReportPDFProps) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -276,10 +277,10 @@ export function ServiceReportPDFDocument({ serviceReport, client, lineItems = []
                   <Text style={{ width: '10%', ...styles.tableCell }}>{item.quantity}</Text>
                   <Text style={{ width: '50%', ...styles.tableCell }}>{item.unitDescription}</Text>
                   <Text style={{ width: '20%', ...styles.tableCell }}>
-                    ₱{parseFloat(item.unitPrice || '0').toFixed(2)}
+                    {currencySymbol}{parseFloat(item.unitPrice || '0').toFixed(2)}
                   </Text>
                   <Text style={{ width: '20%', ...styles.tableCell }}>
-                    ₱{parseFloat(item.amount || '0').toFixed(2)}
+                    {currencySymbol}{parseFloat(item.amount || '0').toFixed(2)}
                   </Text>
                 </View>
               ))}

@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface AgingBucket {
   range: string;
@@ -15,6 +16,7 @@ interface ReceivablesAgingProps {
 }
 
 export default function ReceivablesAging({ buckets, totalAmount }: ReceivablesAgingProps) {
+  const { formatCurrency } = useCurrency();
   const getBadgeVariant = (type: AgingBucket["type"]) => {
     switch (type) {
       case "current": return "default";
@@ -39,7 +41,7 @@ export default function ReceivablesAging({ buckets, totalAmount }: ReceivablesAg
         <CardTitle className="flex items-center gap-2">
           Receivables Aging
           <Badge variant="outline" data-testid="text-total-amount">
-            ₱{totalAmount.toLocaleString()}
+            {formatCurrency(totalAmount)}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -66,7 +68,7 @@ export default function ReceivablesAging({ buckets, totalAmount }: ReceivablesAg
             </div>
             <div className="text-right">
               <div className="font-medium" data-testid={`amount-${index}`}>
-                ₱{bucket.amount.toLocaleString()}
+                {formatCurrency(bucket.amount)}
               </div>
               <Badge 
                 variant={getBadgeVariant(bucket.type)} 

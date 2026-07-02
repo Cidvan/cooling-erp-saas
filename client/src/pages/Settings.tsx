@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { CompanySettings, InsertCompanySettings, Company, InsertCompany } from "@shared/schema";
-import { Loader2, Settings as SettingsIcon, Hash, Palette, Building2 } from "lucide-react";
+import { Loader2, Settings as SettingsIcon, Hash, Palette, Building2, Clock, Plus, Trash2 } from "lucide-react";
 
 type DocNumberingConfig = {
   prefix: string;
@@ -17,6 +17,34 @@ type DocNumberingConfig = {
   nextNumber: number;
   format: string;
 };
+
+type DayHours = {
+  open: string;
+  close: string;
+  closed: boolean;
+};
+
+type BusinessHoursConfig = Record<string, DayHours>;
+
+type Holiday = {
+  date: string;
+  name: string;
+};
+
+const DAYS_OF_WEEK: { key: string; label: string }[] = [
+  { key: "mon", label: "Monday" },
+  { key: "tue", label: "Tuesday" },
+  { key: "wed", label: "Wednesday" },
+  { key: "thu", label: "Thursday" },
+  { key: "fri", label: "Friday" },
+  { key: "sat", label: "Saturday" },
+  { key: "sun", label: "Sunday" },
+];
+
+const DEFAULT_BUSINESS_HOURS: BusinessHoursConfig = DAYS_OF_WEEK.reduce((acc, { key }) => {
+  acc[key] = { open: "09:00", close: "18:00", closed: key === "sun" };
+  return acc;
+}, {} as BusinessHoursConfig);
 
 const DOC_TYPE_LABELS: Record<string, string> = {
   quotation: "Quotations",
@@ -80,6 +108,11 @@ export default function Settings() {
 
   const [numbering, setNumbering] = useState<Record<string, DocNumberingConfig>>({});
 
+  const [businessHours, setBusinessHours] = useState<BusinessHoursConfig>(DEFAULT_BUSINESS_HOURS);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
+  const [newHolidayDate, setNewHolidayDate] = useState("");
+  const [newHolidayName, setNewHolidayName] = useState("");
+
   useEffect(() => {
     if (!company) return;
     setBusinessInfo({
@@ -106,6 +139,8 @@ export default function Settings() {
       taxRate: settings.taxRate || "0.00",
     });
     setNumbering((settings.documentNumbering as Record<string, DocNumberingConfig>) || {});
+    setBusinessHours((settings.businessHours as BusinessHoursConfig) || DEFAULT_BUSINESS_HOURS);
+    setHolidays((settings.holidays as Holiday[]) || []);
   }, [settings]);
 
   const updateMutation = useMutation({
@@ -168,6 +203,35 @@ export default function Settings() {
     }));
   };
 
+  const updateBusinessHoursField = (day: string, field: keyof DayHours, value: string | boolean) => {
+    setBusinessHours((prev) => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [field]: value,
+      },
+    }));
+  };
+
+  const saveBusinessHours = () => {
+    updateMutation.mutate({ businessHours });
+  };
+
+  const addHoliday = () => {
+    if (!newHolidayDate || !newHolidayName.trim()) return;
+    setHolidays((prev) => [...prev, { date: newHolidayDate, name: newHolidayName.trim() }].sort((a, b) => a.date.localeCompare(b.date)));
+    setNewHolidayDate("");
+    setNewHolidayName("");
+  };
+
+  const removeHoliday = (index: number) => {
+    setHolidays((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const saveHolidays = () => {
+    updateMutation.mutate({ holidays });
+  };
+
   if (isLoading || isLoadingCompany) {
     return (
       <div className="flex items-center justify-center h-full" data-testid="loading-settings">
@@ -204,6 +268,10 @@ export default function Settings() {
           <TabsTrigger value="numbering" data-testid="tab-numbering">
             <Hash className="mr-2 h-4 w-4" />
             Document Numbering
+          </TabsTrigger>
+          <TabsTrigger value="hours" data-testid="tab-hours">
+            <Clock className="mr-2 h-4 w-4" />
+            Hours &amp; Holidays
           </TabsTrigger>
         </TabsList>
 
@@ -501,6 +569,158 @@ export default function Settings() {
               </Button>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="hours">
+          <div className="space-y-6">
+            <Card data-testid="card-business-hours">
+              <CardHeader>
+                <CardTitle>Business Hours</CardTitle>
+                <CardDescription>
+                  Set your regular weekly operating hours
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {DAYS_OF_WEEK.map(({ key, label }) => {
+                  const day = businessHours[key] || { open: "09:00", close: "18:00", closed: false };
+                  return (
+                    <div key={key} className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-center border-b pb-3 last:border-b-0 last:pb-0">
+                      <Label className="text-sm font-medium">{label}</Label>
+                      <div className="space-y-1">
+                        <Label htmlFor={`${key}-open`} className="text-xs text-muted-foreground">Open</Label>
+                        <Input
+                          id={`${key}-open`}
+                          type="time"
+                          value={day.open}
+                          disabled={day.closed}
+                          onChange={(e) => updateBusinessHoursField(key, "open", e.target.value)}
+                          data-testid={`input-hours-open-${key}`}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor={`${key}-close`} className="text-xs text-muted-foreground">Close</Label>
+                        <Input
+                          id={`${key}-close`}
+                          type="time"
+                          value={day.close}
+                          disabled={day.closed}
+                          onChange={(e) => updateBusinessHoursField(key, "close", e.target.value)}
+                          data-testid={`input-hours-close-${key}`}
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          id={`${key}-closed`}
+                          checked={day.closed}
+                          onCheckedChange={(checked) => updateBusinessHoursField(key, "closed", checked)}
+                          data-testid={`switch-hours-closed-${key}`}
+                        />
+                        <Label htmlFor={`${key}-closed`} className="text-sm">Closed</Label>
+                      </div>
+                    </div>
+                  );
+                })}
+                <Button
+                  onClick={saveBusinessHours}
+                  disabled={updateMutation.isPending}
+                  data-testid="button-save-business-hours"
+                >
+                  {updateMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card data-testid="card-holidays">
+              <CardHeader>
+                <CardTitle>Holidays</CardTitle>
+                <CardDescription>
+                  Manage dates when your business is closed
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label htmlFor="holiday-date" className="text-xs">Date</Label>
+                    <Input
+                      id="holiday-date"
+                      type="date"
+                      value={newHolidayDate}
+                      onChange={(e) => setNewHolidayDate(e.target.value)}
+                      data-testid="input-holiday-date"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="holiday-name" className="text-xs">Name</Label>
+                    <Input
+                      id="holiday-name"
+                      placeholder="e.g. New Year's Day"
+                      value={newHolidayName}
+                      onChange={(e) => setNewHolidayName(e.target.value)}
+                      data-testid="input-holiday-name"
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={addHoliday}
+                    disabled={!newHolidayDate || !newHolidayName.trim()}
+                    data-testid="button-add-holiday"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add
+                  </Button>
+                </div>
+
+                {holidays.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No holidays added yet</p>
+                ) : (
+                  <div className="space-y-2">
+                    {holidays.map((holiday, index) => (
+                      <div
+                        key={`${holiday.date}-${index}`}
+                        className="flex items-center justify-between border rounded-md px-3 py-2"
+                        data-testid={`row-holiday-${index}`}
+                      >
+                        <div>
+                          <span className="font-medium text-sm">{holiday.name}</span>
+                          <span className="text-xs text-muted-foreground ml-2">{holiday.date}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeHoliday(index)}
+                          data-testid={`button-remove-holiday-${index}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <Button
+                  onClick={saveHolidays}
+                  disabled={updateMutation.isPending}
+                  data-testid="button-save-holidays"
+                >
+                  {updateMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

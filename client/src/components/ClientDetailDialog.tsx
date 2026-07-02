@@ -9,6 +9,7 @@ import { Client, ServiceReport, Quotation, ServiceLineItem, ServiceTechnician, S
 import { format } from "date-fns";
 import { FileText, Receipt, Building2, Mail, Phone, MapPin, Calendar, Eye, ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface ClientDetailDialogProps {
   client: Client | null;
@@ -17,6 +18,7 @@ interface ClientDetailDialogProps {
 }
 
 export default function ClientDetailDialog({ client, isOpen, onClose }: ClientDetailDialogProps) {
+  const { formatCurrency } = useCurrency();
   const [viewingReport, setViewingReport] = useState<ServiceReport | null>(null);
   const { data: serviceReports = [], isLoading: reportsLoading } = useQuery<ServiceReport[]>({
     queryKey: ['/api/service-reports', client?.id],
@@ -332,7 +334,7 @@ export default function ClientDetailDialog({ client, isOpen, onClose }: ClientDe
                                 {quotation.title || '-'}
                               </TableCell>
                               <TableCell className="font-medium" data-testid={`text-quotation-total-${quotation.id}`}>
-                                ₱{parseFloat(quotation.total).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {formatCurrency(quotation.total)}
                               </TableCell>
                               <TableCell>
                                 {getStatusBadge(quotation.status)}
@@ -481,10 +483,10 @@ export default function ClientDetailDialog({ client, isOpen, onClose }: ClientDe
                           <TableCell>{item.unitDescription}</TableCell>
                           <TableCell className="text-right">{item.quantity}</TableCell>
                           <TableCell className="text-right">
-                            ₱{parseFloat(item.unitPrice).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                            {formatCurrency(item.unitPrice)}
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            ₱{parseFloat(item.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                            {formatCurrency(item.amount)}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -494,7 +496,7 @@ export default function ClientDetailDialog({ client, isOpen, onClose }: ClientDe
                     <div className="text-sm">
                       <span className="text-muted-foreground mr-4">Total</span>
                       <span className="font-semibold text-base">
-                        ₱{viewLineItems.reduce((sum, item) => sum + parseFloat(item.amount), 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                        {formatCurrency(viewLineItems.reduce((sum, item) => sum + parseFloat(item.amount), 0))}
                       </span>
                     </div>
                   </div>

@@ -9,8 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Invoice, Quotation, SalesEntry, OperationalExpense, AccountsReceivable, AccountsPayable } from "@shared/schema";
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, parseISO, isWithinInterval } from "date-fns";
+import { useCurrency } from "@/hooks/use-currency";
 
 export default function SalesFinancialDashboard() {
+  const { formatCurrency, symbol: currencySymbol } = useCurrency();
   const [, setLocation] = useLocation();
   const currentDate = new Date();
   const sixMonthsAgo = new Date(currentDate.getFullYear(), currentDate.getMonth() - 5, 1);
@@ -260,7 +262,7 @@ export default function SalesFinancialDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="text-total-sales">
-                  {isLoading ? 'Loading...' : `₱${metrics.totalSales.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  {isLoading ? 'Loading...' : formatCurrency(metrics.totalSales)}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Actual payments received</p>
               </CardContent>
@@ -272,7 +274,7 @@ export default function SalesFinancialDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-primary" data-testid="text-credit-sales">
-                  {isLoading ? 'Loading...' : `₱${metrics.totalCreditSales.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  {isLoading ? 'Loading...' : formatCurrency(metrics.totalCreditSales)}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">AR records created</p>
               </CardContent>
@@ -284,7 +286,7 @@ export default function SalesFinancialDashboard() {
               </CardHeader>
               <CardContent>
                 <div className={`text-2xl font-bold ${metrics.netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`} data-testid="text-net-income">
-                  {isLoading ? 'Loading...' : `₱${metrics.netIncome.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  {isLoading ? 'Loading...' : formatCurrency(metrics.netIncome)}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Cash collected − Expenses</p>
               </CardContent>
@@ -299,7 +301,7 @@ export default function SalesFinancialDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-yellow-600" data-testid="text-receivables-due">
-                  {isLoading ? 'Loading...' : `₱${metrics.receivablesDue.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  {isLoading ? 'Loading...' : formatCurrency(metrics.receivablesDue)}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Outstanding AR balance</p>
               </CardContent>
@@ -311,7 +313,7 @@ export default function SalesFinancialDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600" data-testid="text-payables-due">
-                  {isLoading ? 'Loading...' : `₱${metrics.payablesDue.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  {isLoading ? 'Loading...' : formatCurrency(metrics.payablesDue)}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Pending AP obligations</p>
               </CardContent>
@@ -323,7 +325,7 @@ export default function SalesFinancialDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-500" data-testid="text-total-expenses">
-                  {isLoading ? 'Loading...' : `₱${metrics.totalExpenses.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  {isLoading ? 'Loading...' : formatCurrency(metrics.totalExpenses)}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Operational expenses logged</p>
               </CardContent>
@@ -340,8 +342,8 @@ export default function SalesFinancialDashboard() {
                 <BarChart data={salesSummaryData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(value: number) => `₱${value.toLocaleString('en-PH')}`} />
+                  <YAxis tickFormatter={(v) => `${currencySymbol}${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
                   <Legend />
                   <Bar dataKey="cashCollected" fill="#2563eb" name="Cash Collected" />
                   <Bar dataKey="creditSales" fill="#7c3aed" name="Credit Sales (AR)" />
@@ -360,8 +362,8 @@ export default function SalesFinancialDashboard() {
                 <BarChart data={plData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(value: number) => `₱${value.toLocaleString('en-PH')}`} />
+                  <YAxis tickFormatter={(v) => `${currencySymbol}${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
                   <Legend />
                   <Bar dataKey="cashRevenue" fill="#22c55e" name="Cash Revenue" />
                   <Bar dataKey="creditRevenue" fill="#7c3aed" name="Credit Revenue (AR)" />

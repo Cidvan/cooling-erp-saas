@@ -20,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrency } from "@/hooks/use-currency";
 
 // Expense form schema
 const expenseFormSchema = insertOperationalExpenseSchema.extend({
@@ -59,6 +60,7 @@ interface DailyCashFlow {
 }
 
 export default function PLCashFlow() {
+  const { formatCurrency, symbol: currencySymbol } = useCurrency();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
@@ -809,25 +811,25 @@ export default function PLCashFlow() {
                       </TableCell>
                       <TableCell data-testid={`cell-day-${index}`}>{day.day}</TableCell>
                       <TableCell className="text-right" data-testid={`cell-bank-${index}`}>
-                        ₱{day.bankGCash.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {formatCurrency(day.bankGCash)}
                       </TableCell>
                       <TableCell className="text-right" data-testid={`cell-cash-${index}`}>
-                        ₱{day.cash.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {formatCurrency(day.cash)}
                       </TableCell>
                       <TableCell className="text-right" data-testid={`cell-cheque-${index}`}>
-                        ₱{day.cheque.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {formatCurrency(day.cheque)}
                       </TableCell>
                       <TableCell className="text-right" data-testid={`cell-ar-${index}`}>
-                        ₱{day.accountsReceivables.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {formatCurrency(day.accountsReceivables)}
                       </TableCell>
                       <TableCell className="text-right" data-testid={`cell-gross-sales-${index}`}>
-                        ₱{day.grossSales.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {formatCurrency(day.grossSales)}
                       </TableCell>
                       <TableCell className="text-right" data-testid={`cell-expenses-${index}`}>
-                        ₱{day.operationalExpenses.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {formatCurrency(day.operationalExpenses)}
                       </TableCell>
                       <TableCell className="text-right" data-testid={`cell-ap-${index}`}>
-                        ₱{day.accountsPayables.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {formatCurrency(day.accountsPayables)}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground truncate max-w-[150px]" data-testid={`cell-remarks-${index}`}>
                         {day.remarks || "-"}
@@ -857,7 +859,7 @@ export default function PLCashFlow() {
                         className={`text-right font-semibold ${day.netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}
                         data-testid={`cell-net-${index}`}
                       >
-                        ₱{day.netCashFlow.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {formatCurrency(day.netCashFlow)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -868,25 +870,25 @@ export default function PLCashFlow() {
                       Monthly Total
                     </TableCell>
                     <TableCell className="text-right" data-testid="summary-bank">
-                      ₱{monthlySummary.totalBankGCash.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatCurrency(monthlySummary.totalBankGCash)}
                     </TableCell>
                     <TableCell className="text-right" data-testid="summary-cash">
-                      ₱{monthlySummary.totalCash.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatCurrency(monthlySummary.totalCash)}
                     </TableCell>
                     <TableCell className="text-right" data-testid="summary-cheque">
-                      ₱{monthlySummary.totalCheque.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatCurrency(monthlySummary.totalCheque)}
                     </TableCell>
                     <TableCell className="text-right" data-testid="summary-ar">
-                      ₱{monthlySummary.totalAR.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatCurrency(monthlySummary.totalAR)}
                     </TableCell>
                     <TableCell className="text-right" data-testid="summary-gross-sales">
                       -
                     </TableCell>
                     <TableCell className="text-right" data-testid="summary-expenses">
-                      ₱{monthlySummary.totalOperationalExpenses.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatCurrency(monthlySummary.totalOperationalExpenses)}
                     </TableCell>
                     <TableCell className="text-right" data-testid="summary-ap">
-                      ₱{monthlySummary.totalAccountsPayables.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatCurrency(monthlySummary.totalAccountsPayables)}
                     </TableCell>
                     <TableCell>-</TableCell>
                     <TableCell>-</TableCell>
@@ -894,7 +896,7 @@ export default function PLCashFlow() {
                       className={`text-right text-lg ${monthlySummary.totalNetCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}
                       data-testid="summary-net"
                     >
-                      ₱{monthlySummary.totalNetCashFlow.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatCurrency(monthlySummary.totalNetCashFlow)}
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -949,7 +951,7 @@ export default function PLCashFlow() {
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-primary">
-                          ₱{parseFloat(po.grandTotal.toString()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {formatCurrency(po.grandTotal)}
                         </div>
                         <div className="text-xs text-muted-foreground">Grand Total</div>
                       </div>
@@ -974,10 +976,10 @@ export default function PLCashFlow() {
                                 <TableCell className="font-medium">{item.qty}</TableCell>
                                 <TableCell>{item.particulars}</TableCell>
                                 <TableCell className="text-right">
-                                  ₱{parseFloat(item.unitPrice.toString()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  {formatCurrency(item.unitPrice)}
                                 </TableCell>
                                 <TableCell className="text-right font-semibold">
-                                  ₱{parseFloat(item.amount.toString()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  {formatCurrency(item.amount)}
                                 </TableCell>
                               </TableRow>
                             ))
@@ -1000,7 +1002,7 @@ export default function PLCashFlow() {
                       {po.discount && parseFloat(po.discount.toString()) > 0 && (
                         <div>
                           <div className="text-sm text-muted-foreground">Discount</div>
-                          <div className="font-semibold">₱{parseFloat(po.discount.toString()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                          <div className="font-semibold">{formatCurrency(po.discount)}</div>
                         </div>
                       )}
                       <div>

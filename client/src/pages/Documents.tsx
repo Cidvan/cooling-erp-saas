@@ -67,7 +67,7 @@ type ARPaymentEntry = {
 };
 
 export default function Documents() {
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, symbol: currencySymbol } = useCurrency();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("service-reports");
   const [reportToDelete, setReportToDelete] = useState<ServiceReport | null>(null);
@@ -1017,7 +1017,7 @@ export default function Documents() {
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Amount (₱)</Label>
+                    <Label className="text-xs">Amount ({currencySymbol})</Label>
                     <Input className="h-8 text-xs" type="number" step="0.01" min="0" value={p.amount} onChange={(e) => setUpdatePayments(prev => prev.map(x => x.id === p.id ? { ...x, amount: e.target.value } : x))} />
                   </div>
                   <div className="space-y-1">

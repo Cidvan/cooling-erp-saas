@@ -13,6 +13,7 @@ import { Search, Plus, Trash2, FileText, Save, Eraser, UserPlus } from "lucide-r
 import { Client, ServiceReport, ServiceLineItem, ServiceTechnician, ServiceAcUnit } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import ClientForm from "@/components/ClientForm";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface ServiceLineItemWithId extends ServiceLineItem {
   tempId: string; // for tracking during editing
@@ -43,6 +44,7 @@ const localDateTime = (dateStr: string, timeStr: string) => {
 };
 
 export default function ServiceReports() {
+  const { formatCurrency, symbol: currencySymbol } = useCurrency();
   const [, setLocation] = useLocation();
   const [, editParams] = useRoute("/service-reports/edit/:id");
   const editReportId = editParams?.id ?? null;
@@ -735,7 +737,7 @@ export default function ServiceReports() {
                           />
                         </div>
                         <div className="col-span-2">
-                          <Label className="text-sm">Unit Price (₱)</Label>
+                          <Label className="text-sm">Unit Price ({currencySymbol})</Label>
                           <Input
                             type="number"
                             step="0.01"
@@ -745,9 +747,9 @@ export default function ServiceReports() {
                           />
                         </div>
                         <div className="col-span-2">
-                          <Label className="text-sm">Amount (₱)</Label>
+                          <Label className="text-sm">Amount ({currencySymbol})</Label>
                           <Input
-                            value={`₱${Number(item.amount).toLocaleString()}`}
+                            value={formatCurrency(item.amount)}
                             disabled
                             className="bg-muted"
                             data-testid={`text-amount-${item.tempId}`}
@@ -772,7 +774,7 @@ export default function ServiceReports() {
                       <div className="text-right">
                         <div className="text-sm text-muted-foreground">Total Amount</div>
                         <div className="text-2xl font-bold" data-testid="total-amount">
-                          ₱{Number(getTotalAmount()).toLocaleString()}
+                          {formatCurrency(getTotalAmount())}
                         </div>
                       </div>
                     </div>

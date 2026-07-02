@@ -20,6 +20,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { PurchaseOrder, PurchaseOrderItem } from "@shared/schema";
 import { Plus, Trash2, FileText } from "lucide-react";
 import { format } from "date-fns";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface POItem {
   qty: number;
@@ -29,6 +30,7 @@ interface POItem {
 }
 
 export default function PurchaseOrders() {
+  const { formatCurrency, symbol: currencySymbol } = useCurrency();
   const { toast } = useToast();
   const [currentPOId, setCurrentPOId] = useState<string | null>(null);
 
@@ -439,10 +441,10 @@ export default function PurchaseOrders() {
                           <TableCell data-testid={`text-qty-${index}`}>{item.qty}</TableCell>
                           <TableCell data-testid={`text-particulars-${index}`}>{item.particulars}</TableCell>
                           <TableCell data-testid={`text-unit-price-${index}`}>
-                            ₱{item.unitPrice.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {formatCurrency(item.unitPrice)}
                           </TableCell>
                           <TableCell data-testid={`text-amount-${index}`}>
-                            ₱{item.amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {formatCurrency(item.amount)}
                           </TableCell>
                           <TableCell>
                             <Button
@@ -475,14 +477,14 @@ export default function PurchaseOrders() {
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Subtotal:</span>
                   <span className="font-bold text-lg" data-testid="text-subtotal">
-                    ₱{subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatCurrency(subtotal)}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center gap-4">
                   <Label htmlFor="discount">Less Discount:</Label>
                   <div className="flex items-center gap-2">
-                    <span>₱</span>
+                    <span>{currencySymbol}</span>
                     <Input
                       id="discount"
                       type="number"
@@ -500,7 +502,7 @@ export default function PurchaseOrders() {
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-xl">Grand Total:</span>
                     <span className="font-bold text-2xl text-primary" data-testid="text-grand-total">
-                      ₱{grandTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatCurrency(grandTotal)}
                     </span>
                   </div>
                 </div>
@@ -588,7 +590,7 @@ export default function PurchaseOrders() {
                         </TableCell>
                         <TableCell data-testid={`text-supplier-${po.id}`}>{po.supplierName}</TableCell>
                         <TableCell data-testid={`text-grand-total-${po.id}`}>
-                          ₱{parseFloat(po.grandTotal).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {formatCurrency(po.grandTotal)}
                         </TableCell>
                         <TableCell data-testid={`text-status-${po.id}`}>
                           <span className="px-2 py-1 rounded-full text-xs bg-primary/10 text-primary">

@@ -35,6 +35,12 @@ export default function ServiceReportPDFPreview() {
   });
   const companyName = company?.name;
 
+  const { data: companySettings } = useQuery<{ currencySymbol?: string | null }>({
+    queryKey: ["/api/company/settings"],
+    retry: false,
+  });
+  const currencySymbol = companySettings?.currencySymbol || "₱";
+
   const { data: lineItems = [], isLoading: isLoadingLineItems, isSuccess: isSuccessLineItems } = useQuery<ServiceLineItem[]>({
     queryKey: ["/api/service-reports", serviceReport?.id, "line-items"],
     enabled: !!serviceReport?.id,
@@ -94,6 +100,7 @@ export default function ServiceReportPDFPreview() {
             technicians={technicians}
             acUnits={acUnits}
             companyName={companyName}
+            currencySymbol={currencySymbol}
           />
         ).toBlob();
 
@@ -150,6 +157,7 @@ export default function ServiceReportPDFPreview() {
         technicians={technicians}
         acUnits={acUnits}
         companyName={companyName}
+        currencySymbol={currencySymbol}
       />
     ).toBlob();
 

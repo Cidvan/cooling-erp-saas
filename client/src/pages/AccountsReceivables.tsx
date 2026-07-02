@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast"; 
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { z } from "zod";
+import { useCurrency } from "@/hooks/use-currency";
 
 type FilterView = "weekly" | "monthly" | "year";
 
@@ -31,6 +32,7 @@ type PaymentEntry = {
 };
 
 export default function AccountsReceivables() {
+  const { formatCurrency } = useCurrency();
   const [location, setLocation] = useLocation();
   const [filterView, setFilterView] = useState<FilterView>("monthly");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -635,7 +637,7 @@ export default function AccountsReceivables() {
 
                         {totalPayments > 0 && index === payments.length - 1 && (
                           <div className="text-sm text-muted-foreground pt-2 border-t">
-                            Total Payments: ₱{totalPayments.toFixed(2)}
+                            Total Payments: {formatCurrency(totalPayments)}
                           </div>
                         )}
                       </div>
@@ -761,7 +763,7 @@ export default function AccountsReceivables() {
                     <TableCell>{p.paymentNumber}</TableCell>
                     <TableCell>{format(new Date(p.paymentDate), 'MMM dd, yyyy')}</TableCell>
                     <TableCell className="capitalize">{p.paymentMode.replace('_', '/')}</TableCell>
-                    <TableCell>₱{parseFloat(p.amount.toString()).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell>{formatCurrency(p.amount)}</TableCell>
                     <TableCell className="text-muted-foreground text-xs">
                       {p.chequeNumber || p.referenceNumber || '—'}
                     </TableCell>
@@ -771,7 +773,7 @@ export default function AccountsReceivables() {
             </Table>
           )}
           <div className="border-t pt-3 text-sm font-medium text-right">
-            Total: ₱{viewPayments.reduce((s, p) => s + parseFloat(p.amount.toString()), 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+            Total: {formatCurrency(viewPayments.reduce((s, p) => s + parseFloat(p.amount.toString()), 0))}
           </div>
         </DialogContent>
       </Dialog>
@@ -812,7 +814,7 @@ export default function AccountsReceivables() {
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold text-primary" data-testid="text-total-receivables">
-            ₱{totalReceivables.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatCurrency(totalReceivables)}
           </div>
         </CardContent>
       </Card>
@@ -855,13 +857,13 @@ export default function AccountsReceivables() {
                     <TableCell>{ar.clientName}</TableCell>
                     <TableCell>{ar.srNumber || '-'}</TableCell>
                     <TableCell>{ar.ciNumber || '-'}</TableCell>
-                    <TableCell>₱{parseFloat(ar.amount.toString()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                    <TableCell>{formatCurrency(ar.amount)}</TableCell>
                     <TableCell>
                       {ar.firstPaymentAmount && parseFloat(ar.firstPaymentAmount.toString()) > 0
-                        ? `₱${parseFloat(ar.firstPaymentAmount.toString()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        ? formatCurrency(ar.firstPaymentAmount)
                         : '-'}
                     </TableCell>
-                    <TableCell>₱{parseFloat(ar.balance.toString()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                    <TableCell>{formatCurrency(ar.balance)}</TableCell>
                     <TableCell>{ar.dueDate ? format(new Date(ar.dueDate), 'MMM dd, yyyy') : '-'}</TableCell>
                     <TableCell>{ar.paymentTerms || '-'}</TableCell>
                     <TableCell>{ar.orNumber || '-'}</TableCell>
@@ -929,7 +931,7 @@ export default function AccountsReceivables() {
               <DialogHeader>
                 <DialogTitle>Update Payments — {updatePaymentAR.arNumber}</DialogTitle>
                 <p className="text-sm text-muted-foreground">
-                  Total Amount: ₱{parseFloat(updatePaymentAR.amount.toString()).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                  Total Amount: {formatCurrency(updatePaymentAR.amount)}
                 </p>
               </DialogHeader>
 

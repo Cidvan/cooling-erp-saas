@@ -7,8 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Invoice, Quotation, Client, AccountsReceivable, SalesEntry } from "@shared/schema";
 import { ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
+import { useCurrency } from "@/hooks/use-currency";
 
 export default function SalesTracking() {
+  const { formatCurrency } = useCurrency();
   const [, setLocation] = useLocation();
 
   const { data: invoices = [] } = useQuery<Invoice[]>({
@@ -124,7 +126,7 @@ export default function SalesTracking() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ₱{totalInvoiced.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+              {formatCurrency(totalInvoiced)}
             </div>
             <p className="text-xs text-muted-foreground">{invoiceSales.length} invoice(s)</p>
           </CardContent>
@@ -136,7 +138,7 @@ export default function SalesTracking() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ₱{totalAR.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+              {formatCurrency(totalAR)}
             </div>
             <p className="text-xs text-muted-foreground">{arSales.length} AR record(s)</p>
           </CardContent>
@@ -148,7 +150,7 @@ export default function SalesTracking() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              ₱{totalARCollected.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+              {formatCurrency(totalARCollected)}
             </div>
             <p className="text-xs text-muted-foreground">Fully paid ARs</p>
           </CardContent>
@@ -160,7 +162,7 @@ export default function SalesTracking() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              ₱{totalAROutstanding.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+              {formatCurrency(totalAROutstanding)}
             </div>
             <p className="text-xs text-muted-foreground">Remaining balance</p>
           </CardContent>
@@ -220,12 +222,12 @@ export default function SalesTracking() {
                     </span>
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    ₱{sale.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                    {formatCurrency(sale.amount)}
                   </TableCell>
                   <TableCell className="text-right">
                     {sale.balance !== null ? (
                       <span className={sale.balance > 0 ? 'text-yellow-600 font-medium' : 'text-green-600'}>
-                        ₱{sale.balance.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                        {formatCurrency(sale.balance)}
                       </span>
                     ) : '—'}
                   </TableCell>

@@ -12,3 +12,5 @@ CoolDesk (formerly JCAJ Cooling Solutions ERP) is multi-tenant: a top-level `com
 - Any new business table/feature must include a required `companyId` and its storage methods/routes must filter by it (`requireCompany` middleware reads it from session).
 - No demo/test users are seeded in this app (by design, stated in replit.md). The first `super_admin` must be created via `scripts/bootstrap-super-admin.ts <username> <password> [email]` — check this script exists before assuming any users exist in a fresh environment.
 - Company display name is fetched client-side from `/api/company/me` with a "CoolDesk" fallback (used in TopNavigation and PDF documents) rather than hardcoding a single business's branding.
+- `@react-pdf/renderer` documents render outside the app's `QueryClientProvider` tree, so PDF components cannot call `useQuery`/`useCurrency` internally — fetch settings (e.g. currency) in the calling page and pass them down as props to the PDF document component instead.
+- `drizzle-kit push` is interactive and not scriptable in this environment; for one-off new tables, apply the DDL manually via psql instead of trying to force a non-interactive push.

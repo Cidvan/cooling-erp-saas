@@ -125,7 +125,7 @@ export function AppSidebar() {
           <div className="min-w-0">
             <div className="font-semibold text-[15px] tracking-tight truncate">CoolDesk</div>
             <div className="text-[11px] text-muted-foreground truncate">
-              {isSuperAdmin ? "Platform Admin" : "ERP Workspace"}
+              {isSuperAdmin ? "Platform Admin" : "Business Workspace"}
             </div>
           </div>
         </div>

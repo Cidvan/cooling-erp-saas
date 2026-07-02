@@ -17,12 +17,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Client, Quotation, QuotationLineItem } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import ClientForm from "@/components/ClientForm";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface QuotationLineItemWithId extends QuotationLineItem {
   tempId: string; // for tracking during editing
 }
 
 export default function Quotations() {
+  const { formatCurrency, symbol: currencySymbol } = useCurrency();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [quotation, setQuotation] = useState<Partial<Quotation>>({
@@ -540,7 +542,7 @@ export default function Quotations() {
                         </div>
                         <div className="text-right space-y-2">
                           <div className="text-2xl font-bold" data-testid={`text-total-${quotation.id}`}>
-                            ₱{Number(quotation.total).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                            {formatCurrency(quotation.total)}
                           </div>
                           <div className="flex gap-2">
                             <Button 
@@ -846,7 +848,7 @@ export default function Quotations() {
                           </div>
                           
                           <div className="col-span-4 md:col-span-2">
-                            <Label htmlFor={`unitPrice-${item.tempId}`}>Unit Price (₱)</Label>
+                            <Label htmlFor={`unitPrice-${item.tempId}`}>Unit Price ({currencySymbol})</Label>
                             <Input
                               id={`unitPrice-${item.tempId}`}
                               type="number"
@@ -859,9 +861,9 @@ export default function Quotations() {
                           </div>
                           
                           <div className="col-span-3 md:col-span-2">
-                            <Label>Amount (₱)</Label>
+                            <Label>Amount ({currencySymbol})</Label>
                             <div className="text-lg font-semibold p-2" data-testid={`text-amount-${index}`}>
-                              ₱{Number(item.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                              {formatCurrency(item.amount)}
                             </div>
                           </div>
                           
@@ -887,7 +889,7 @@ export default function Quotations() {
                       {/* Discount & Tax controls */}
                       <div className="flex flex-wrap gap-6 items-end mb-4">
                         <div className="flex flex-col gap-1">
-                          <Label htmlFor="discount">Discount (₱)</Label>
+                          <Label htmlFor="discount">Discount ({currencySymbol})</Label>
                           <Input
                             id="discount"
                             type="number"
@@ -914,23 +916,23 @@ export default function Quotations() {
                       <div className="space-y-2">
                         <div className="flex justify-between text-lg">
                           <span>Subtotal:</span>
-                          <span data-testid="text-subtotal">₱{Number(totals.subtotal).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                          <span data-testid="text-subtotal">{formatCurrency(totals.subtotal)}</span>
                         </div>
                         {Number(totals.discount) > 0 && (
                           <div className="flex justify-between text-lg text-muted-foreground">
                             <span>Discount:</span>
-                            <span data-testid="text-discount">- ₱{Number(totals.discount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                            <span data-testid="text-discount">- {formatCurrency(totals.discount)}</span>
                           </div>
                         )}
                         <div className="flex justify-between text-lg">
                           <span>Tax (12% VAT):</span>
-                          <span data-testid="text-tax">{taxEnabled ? `₱${Number(totals.tax).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : "—"}</span>
+                          <span data-testid="text-tax">{taxEnabled ? formatCurrency(totals.tax) : "—"}</span>
                         </div>
                         
                         <Separator />
                         <div className="flex justify-between text-xl font-bold">
                           <span>Total:</span>
-                          <span data-testid="text-total">₱{Number(totals.total).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                          <span data-testid="text-total">{formatCurrency(totals.total)}</span>
                         </div>
                       </div>
                     </>
@@ -1017,8 +1019,8 @@ export default function Quotations() {
                       <TableRow key={item.id}>
                         <TableCell>{item.unitDescription}</TableCell>
                         <TableCell className="text-right">{item.quantity}</TableCell>
-                        <TableCell className="text-right">₱{Number(item.unitPrice).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</TableCell>
-                        <TableCell className="text-right">₱{Number(item.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(item.amount)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1030,22 +1032,22 @@ export default function Quotations() {
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>₱{Number(viewingQuotation.subtotal).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                  <span>{formatCurrency(viewingQuotation.subtotal)}</span>
                 </div>
                 {Number(viewingQuotation.discount) > 0 && (
                   <div className="flex justify-between text-muted-foreground">
                     <span>Discount</span>
-                    <span>- ₱{Number(viewingQuotation.discount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                    <span>- {formatCurrency(viewingQuotation.discount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Tax (12% VAT)</span>
-                  <span>{viewingQuotation.taxEnabled ? `₱${Number(viewingQuotation.tax).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : "—"}</span>
+                  <span>{viewingQuotation.taxEnabled ? formatCurrency(viewingQuotation.tax) : "—"}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between font-bold text-base">
                   <span>Total</span>
-                  <span>₱{Number(viewingQuotation.total).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                  <span>{formatCurrency(viewingQuotation.total)}</span>
                 </div>
               </div>
             </div>

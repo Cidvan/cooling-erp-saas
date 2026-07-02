@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, ReferenceLine } from "recharts";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface ProfitLossData {
   month: string;
@@ -14,6 +15,7 @@ interface ProfitLossChartProps {
 }
 
 export default function ProfitLossChart({ data, height = 300 }: ProfitLossChartProps) {
+  const { formatCurrency, symbol: currencySymbol } = useCurrency();
   return (
     <Card data-testid="card-profit-loss-chart" className="hover-elevate">
       <CardHeader>
@@ -32,11 +34,11 @@ export default function ProfitLossChart({ data, height = 300 }: ProfitLossChartP
               tick={{ fontSize: 12 }}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => `₱${value / 1000}k`}
+              tickFormatter={(value) => `${currencySymbol}${value / 1000}k`}
             />
             <Tooltip 
               formatter={(value: number, name: string) => [
-                `₱${value.toLocaleString()}`, 
+                formatCurrency(value), 
                 name === 'revenue' ? 'Revenue' : name === 'expenses' ? 'Expenses' : 'Profit'
               ]}
               labelStyle={{ color: 'hsl(var(--foreground))' }}

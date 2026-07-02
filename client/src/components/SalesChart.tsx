@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface SalesData {
   month: string;
@@ -14,6 +15,7 @@ interface SalesChartProps {
 }
 
 export default function SalesChart({ data, title, height = 300 }: SalesChartProps) {
+  const { formatCurrency, symbol: currencySymbol } = useCurrency();
   return (
     <Card data-testid="card-sales-chart" className="hover-elevate">
       <CardHeader>
@@ -32,10 +34,10 @@ export default function SalesChart({ data, title, height = 300 }: SalesChartProp
               tick={{ fontSize: 12 }}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => `₱${value / 1000}k`}
+              tickFormatter={(value) => `${currencySymbol}${value / 1000}k`}
             />
             <Tooltip 
-              formatter={(value: number) => [`₱${value.toLocaleString()}`, 'Sales']}
+              formatter={(value: number) => [formatCurrency(value), 'Sales']}
               labelStyle={{ color: 'hsl(var(--foreground))' }}
               contentStyle={{ 
                 backgroundColor: 'hsl(var(--card))',

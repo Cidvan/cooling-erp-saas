@@ -294,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/company/settings", requireAuth, requireCompany, async (req, res) => {
+  app.patch("/api/company/settings", requireAuth, requireCompany, requireRole("owner", "admin"), async (req, res) => {
     try {
       const companyId = req.session.companyId!;
       const validatedData = insertCompanySettingsSchema.partial().parse(req.body);
