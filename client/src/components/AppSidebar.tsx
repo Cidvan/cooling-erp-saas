@@ -21,7 +21,8 @@ import {
   Building2,
   Bell,
   Activity,
-  ShieldCheck
+  ShieldCheck,
+  CalendarDays
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/lib/auth";
@@ -51,6 +52,11 @@ const operationsItems = [
     title: "Documents",
     url: "/documents",
     icon: FolderOpen,
+  },
+  {
+    title: "Calendar",
+    url: "/calendar",
+    icon: CalendarDays,
   },
 ];
 

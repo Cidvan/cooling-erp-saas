@@ -123,6 +123,18 @@ export default function AccountsReceivables() {
     setPayments(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
   };
 
+  // Auto-open edit dialog for a specific AR (e.g. deep link from Calendar)
+  useEffect(() => {
+    const editArId = params.get('editArId');
+    if (editArId && ars.length > 0) {
+      const ar = ars.find(a => a.id === editArId);
+      if (ar) {
+        handleEdit(ar);
+      }
+      window.history.replaceState({}, '', location.split('?')[0]);
+    }
+  }, [ars]);
+
   // Auto-open dialog if query parameters are present
   useEffect(() => {
     if (params.get('srNumber') || params.get('clientId')) {

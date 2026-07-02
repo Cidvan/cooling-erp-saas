@@ -428,6 +428,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/notifications", requireCompany);
   app.use("/api/activity-logs", requireCompany);
   app.use("/api/dashboard", requireCompany);
+  app.use("/api/calendar", requireCompany);
 
   // Client routes
   app.get("/api/clients", async (req, res) => {
@@ -1046,6 +1047,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete quotation line item" });
+    }
+  });
+
+  // Calendar aggregation endpoint — read-only view combining existing
+  // scheduling data (service reports, AR/AP due dates) into a single
+  // normalized event list. No parallel data store: this just reads and
+  // reshapes existing tables. To add a new source in the future (e.g.
+  // project deadlines, technician schedules), push additional normalized
+  // events into the same `events` array below — the response shape stays
+  // the same, so the calendar UI needs no changes.
+  app.get("/api/calendar", async (req, res) => {
+    try {
+      const companyId = req.session.companyId!;
+      const [reports, ars, aps, clientList] = await Promise.all([
+        storage.getServiceReports(companyId),
+        storage.getAccountsReceivables(companyId),
+        storage.getAccountsPayables(companyId),
+        storage.getClients(companyId),
+      ]);
+
+      const clientNameById = new Map(clientList.map((c) => [c.id, c.name]));
+
+      type CalendarEvent = {
+        id: string;
+        date: string;
+        type: "service_report" | "ar_due" | "ap_due";
+        title: string;
+        subtitle?: string;
+        entityId: string;
+        entityType: "service_report" | "accounts_receivable" | "accounts_payable";
+        status?: string;
+        amount?: string;
+      };
+
+      const events: CalendarEvent[] = [];
+
+      // Source 1: Scheduled / in-progress service reports (installation & maintenance visits)
+      for (const r of reports) {
+        if (r.status === "scheduled" || r.status === "in_progress") {
+          events.push({
+            id: `sr-${r.id}`,
+            date: new Date(r.serviceDate).toISOString(),
+            type: "service_report",
+            title: clientNameById.get(r.clientId) || "Service Visit",
+            subtitle: r.reportNumber,
+            entityId: r.id,
+            entityType: "service_report",
+            status: r.status,
+          });
+        }
+      }
+
+      // Source 2: Accounts receivable due dates (still owed)
+      for (const ar of ars) {
+        if (ar.dueDate && ar.status !== "paid" && ar.status !== "waived") {
+          events.push({
+            id: `ar-${ar.id}`,
+            date: new Date(ar.dueDate).toISOString(),
+            type: "ar_due",
+            title: clientNameById.get(ar.clientId) || "Client",
+            subtitle: `AR ${ar.arNumber} due`,
+            entityId: ar.id,
+            entityType: "accounts_receivable",
+            status: ar.status,
+            amount: ar.balance?.toString(),
+          });
+        }
+      }
+
+      // Source 3: Accounts payable due dates (still owed)
+      for (const ap of aps) {
+        if (ap.status !== "paid") {
+          events.push({
+            id: `ap-${ap.id}`,
+            date: new Date(ap.date).toISOString(),
+            type: "ap_due",
+            title: ap.supplierName,
+            subtitle: `AP ${ap.apNumber} due`,
+            entityId: ap.id,
+            entityType: "accounts_payable",
+            status: ap.status,
+            amount: ap.balance?.toString(),
+          });
+        }
+      }
+
+      res.json(events);
+    } catch (error) {
+      console.error("[calendar] Error building calendar events:", error);
+      res.status(500).json({ error: "Failed to fetch calendar events" });
     }
   });
 
