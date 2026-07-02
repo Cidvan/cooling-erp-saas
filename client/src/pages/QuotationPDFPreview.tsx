@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download } from "lucide-react";
 import { QuotationPDFDocument } from "@/components/QuotationPDF";
 import { pdf } from '@react-pdf/renderer';
-import type { Quotation, Client, QuotationLineItem } from "@shared/schema";
+import type { Quotation, Client, QuotationLineItem, Company } from "@shared/schema";
 
 export default function QuotationPDFPreview() {
   const [, params] = useRoute("/quotations/pdf-preview/:quotationNumber");
@@ -27,6 +27,12 @@ export default function QuotationPDFPreview() {
 
   const quotation = quotations.find(q => q.quotationNumber === quotationNumber);
   const client = quotation ? clients.find(c => c.id === quotation.clientId) : undefined;
+
+  const { data: company } = useQuery<Company>({
+    queryKey: ["/api/company/me"],
+    retry: false,
+  });
+  const companyName = company?.name;
 
   const { data: lineItems = [], isLoading: isLoadingLineItems, isSuccess: isSuccessLineItems } = useQuery<QuotationLineItem[]>({
     queryKey: ["/api/quotations", quotation?.id, "line-items"],
@@ -62,6 +68,7 @@ export default function QuotationPDFPreview() {
             quotation={quotation!}
             client={client!}
             lineItems={lineItems}
+            companyName={companyName}
           />
         ).toBlob();
 
@@ -88,7 +95,7 @@ export default function QuotationPDFPreview() {
     return () => {
       cancelled = true;
     };
-  }, [hasQuotation, allQueriesSuccessful, quotation, client, lineItems, retryTrigger]);
+  }, [hasQuotation, allQueriesSuccessful, quotation, client, lineItems, retryTrigger, companyName]);
 
   useEffect(() => {
     return () => {

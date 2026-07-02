@@ -3,16 +3,33 @@ import { pgTable, text, varchar, timestamp, integer, decimal, boolean } from "dr
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export const companies = pgTable("companies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  logoUrl: text("logo_url"),
+  address: text("address"),
+  phone: text("phone"),
+  email: text("email"),
+  taxId: text("tax_id"),
+  status: text("status").notNull().default("active"), // active, inactive
+  dateCreated: timestamp("date_created").defaultNow(),
+  lastModified: timestamp("last_modified").defaultNow(),
+});
+
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  // null companyId => platform-level super_admin, not tied to any company
+  companyId: varchar("company_id"),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   email: text("email"),
-  role: text("role").notNull().default("staff"),
+  role: text("role").notNull().default("staff"), // super_admin, owner, admin, staff, ojt
 });
 
 export const clients = pgTable("clients", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull(),
   name: text("name").notNull(),
   company: text("company"),
   email: text("email").notNull(),
@@ -28,6 +45,7 @@ export const clients = pgTable("clients", {
 
 export const serviceReports = pgTable("service_reports", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull(),
   clientId: varchar("client_id").notNull(),
   
   // Service Report Number
@@ -92,6 +110,7 @@ export const serviceAcUnits = pgTable("service_ac_units", {
 
 export const quotations = pgTable("quotations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull(),
   clientId: varchar("client_id").notNull(),
   
   // Quotation Basic Info
@@ -130,6 +149,7 @@ export const quotationLineItems = pgTable("quotation_line_items", {
 
 export const invoices = pgTable("invoices", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull(),
   clientId: varchar("client_id").notNull(),
   quotationId: varchar("quotation_id"), // reference to original quotation (optional)
   
@@ -167,6 +187,7 @@ export const invoiceLineItems = pgTable("invoice_line_items", {
 
 export const accountsReceivables = pgTable("accounts_receivables", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull(),
   
   // AR Number (auto-generated)
   arNumber: text("ar_number").notNull().unique(),
@@ -221,6 +242,7 @@ export const arPayments = pgTable("ar_payments", {
 
 export const operationalExpenses = pgTable("operational_expenses", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull(),
   
   // Basic Information
   date: timestamp("date").notNull(),
@@ -239,6 +261,7 @@ export const operationalExpenses = pgTable("operational_expenses", {
 
 export const salesEntries = pgTable("sales_entries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull(),
   
   // Basic Information
   date: timestamp("date").notNull(),
@@ -258,6 +281,7 @@ export const salesEntries = pgTable("sales_entries", {
 
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull(),
   
   // User this notification is for
   userId: varchar("user_id").notNull(),
@@ -285,6 +309,7 @@ export const notifications = pgTable("notifications", {
 
 export const activityLogs = pgTable("activity_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull(),
   
   // User who performed the activity
   userId: varchar("user_id").notNull(),
@@ -307,6 +332,15 @@ export const activityLogs = pgTable("activity_logs", {
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  email: true,
+  role: true,
+  companyId: true,
+});
+
+export const insertCompanySchema = createInsertSchema(companies).omit({
+  id: true,
+  dateCreated: true,
+  lastModified: true,
 });
 
 export const updateUserProfileSchema = z.object({
@@ -325,6 +359,7 @@ export const updatePasswordSchema = z.object({
 
 export const insertClientSchema = createInsertSchema(clients).omit({
   id: true,
+  companyId: true,
   dateCreated: true,
 }).extend({
   firstTransactionDate: z.coerce.date().optional(),
@@ -334,6 +369,7 @@ export const insertClientSchema = createInsertSchema(clients).omit({
 
 export const insertServiceReportSchema = createInsertSchema(serviceReports).omit({
   id: true,
+  companyId: true,
   dateCreated: true,
   lastModified: true,
 }).extend({
@@ -362,6 +398,7 @@ export const insertServiceAcUnitSchema = createInsertSchema(serviceAcUnits).omit
 
 export const insertQuotationSchema = createInsertSchema(quotations).omit({
   id: true,
+  companyId: true,
   dateCreated: true,
   lastModified: true,
 }).extend({
@@ -377,6 +414,7 @@ export const insertQuotationLineItemSchema = createInsertSchema(quotationLineIte
 
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({
   id: true,
+  companyId: true,
   dateCreated: true,
   lastModified: true,
 }).extend({
@@ -392,6 +430,7 @@ export const insertInvoiceLineItemSchema = createInsertSchema(invoiceLineItems).
 
 export const insertAccountsReceivableSchema = createInsertSchema(accountsReceivables).omit({
   id: true,
+  companyId: true,
   arNumber: true,
   dateCreated: true,
   lastModified: true,
@@ -412,6 +451,7 @@ export const insertArPaymentSchema = createInsertSchema(arPayments).omit({
 
 export const insertOperationalExpenseSchema = createInsertSchema(operationalExpenses).omit({
   id: true,
+  companyId: true,
   dateCreated: true,
 }).extend({
   date: z.coerce.date(),
@@ -420,6 +460,7 @@ export const insertOperationalExpenseSchema = createInsertSchema(operationalExpe
 
 export const insertSalesEntrySchema = createInsertSchema(salesEntries).omit({
   id: true,
+  companyId: true,
   dateCreated: true,
 }).extend({
   date: z.coerce.date(),
@@ -428,6 +469,7 @@ export const insertSalesEntrySchema = createInsertSchema(salesEntries).omit({
 
 export const purchaseOrders = pgTable("purchase_orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull(),
   
   // PO Number (auto-generated)
   poNumber: text("po_number").notNull().unique(),
@@ -464,6 +506,7 @@ export const purchaseOrderItems = pgTable("purchase_order_items", {
 
 export const accountsPayables = pgTable("accounts_payables", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull(),
   
   // AP Number (auto-generated)
   apNumber: text("ap_number").notNull().unique(),
@@ -500,6 +543,7 @@ export const accountsPayables = pgTable("accounts_payables", {
 
 export const insertPurchaseOrderSchema = createInsertSchema(purchaseOrders).omit({
   id: true,
+  companyId: true,
   poNumber: true,
   dateCreated: true,
   lastModified: true,
@@ -514,6 +558,7 @@ export const insertPurchaseOrderItemSchema = createInsertSchema(purchaseOrderIte
 
 export const insertAccountsPayableSchema = createInsertSchema(accountsPayables).omit({
   id: true,
+  companyId: true,
   apNumber: true,
   dateCreated: true,
   lastModified: true,
@@ -525,16 +570,20 @@ export const insertAccountsPayableSchema = createInsertSchema(accountsPayables).
 
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
   id: true,
+  companyId: true,
   createdAt: true,
 });
 
 export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
   id: true,
+  companyId: true,
   timestamp: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type InsertCompany = z.infer<typeof insertCompanySchema>;
+export type Company = typeof companies.$inferSelect;
 export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
 export type UpdatePassword = z.infer<typeof updatePasswordSchema>;
 export type InsertClient = z.infer<typeof insertClientSchema>;

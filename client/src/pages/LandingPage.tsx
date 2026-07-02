@@ -17,7 +17,7 @@ export default function LandingPage() {
             </div>
           </div>
           <h1 className="text-5xl font-bold text-gray-900 mb-4" data-testid="text-landing-title">
-            JCAJ Cooling Solutions
+            CoolDesk
           </h1>
           <h2 className="text-3xl font-semibold text-primary mb-4">
             ERP Management System
@@ -118,7 +118,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="bg-gray-50 border-t py-6">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>© 2024 JCAJ Cooling Solutions. All rights reserved.</p>
+          <p>© 2026 CoolDesk. All rights reserved.</p>
         </div>
       </footer>
     </div>

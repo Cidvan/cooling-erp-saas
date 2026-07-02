@@ -61,7 +61,7 @@ export default function LoginPage() {
             Welcome Back
           </CardTitle>
           <CardDescription>
-            Sign in to JCAJ Cooling Solutions ERP
+            Sign in to CoolDesk
           </CardDescription>
         </CardHeader>
         <CardContent>

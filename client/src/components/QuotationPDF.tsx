@@ -110,9 +110,10 @@ interface QuotationPDFDocumentProps {
   quotation: Quotation;
   client: Client;
   lineItems: QuotationLineItem[];
+  companyName?: string;
 }
 
-export function QuotationPDFDocument({ quotation, client, lineItems }: QuotationPDFDocumentProps) {
+export function QuotationPDFDocument({ quotation, client, lineItems, companyName }: QuotationPDFDocumentProps) {
   const hasUnitPrice = lineItems.some(item => parseFloat(item.unitPrice || '0') > 0);
 
   const clientDisplay = client.company || client.name;
@@ -126,7 +127,7 @@ export function QuotationPDFDocument({ quotation, client, lineItems }: Quotation
 
         {/* Header */}
         <View style={styles.headerContainer}>
-          <Text style={styles.companyName}>JCAJ Cooling Solutions</Text>
+          <Text style={styles.companyName}>{companyName || "CoolDesk"}</Text>
           <Text style={styles.headerLine}>#014 Pulo, Cabuyao, Laguna</Text>
           <Text style={styles.headerLine}>Contact Number: (0938) 405 9180 / (0922) 904 7082 / (0966) 678 9798</Text>
           <Text style={styles.headerLine}>Email: jcajcoolingsolutions@yahoo.com</Text>

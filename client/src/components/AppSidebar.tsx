@@ -17,7 +17,8 @@ import {
   DollarSign, 
   ShoppingCart, 
   FolderOpen,
-  ReceiptText
+  ReceiptText,
+  Building2
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/lib/auth";
@@ -68,6 +69,14 @@ const financeItems = [
   },
 ];
 
+const superAdminItems = [
+  {
+    title: "Companies",
+    url: "/admin/companies",
+    icon: Building2,
+  },
+];
+
 function NavGroup({ label, items, location }: { label: string; items: typeof operationsItems; location: string }) {
   return (
     <SidebarGroup>
@@ -98,24 +107,33 @@ export function AppSidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
   const isOjt = user?.role === "ojt";
+  const isSuperAdmin = user?.role === "super_admin";
 
   return (
     <Sidebar data-testid="sidebar-navigation">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">JC</span>
+            <span className="text-primary-foreground font-bold text-sm">CD</span>
           </div>
           <div>
-            <div className="font-semibold text-sm">JCAJ Cooling Solutions</div>
-            <div className="text-xs text-muted-foreground">ERP System</div>
+            <div className="font-semibold text-sm">CoolDesk</div>
+            <div className="text-xs text-muted-foreground">
+              {isSuperAdmin ? "Platform Admin" : "ERP System"}
+            </div>
           </div>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
-          <NavGroup label="Operations" items={operationsItems} location={location} />
-        {!isOjt && <NavGroup label="Finance" items={financeItems} location={location} />}
+        {isSuperAdmin ? (
+          <NavGroup label="Platform" items={superAdminItems} location={location} />
+        ) : (
+          <>
+            <NavGroup label="Operations" items={operationsItems} location={location} />
+            {!isOjt && <NavGroup label="Finance" items={financeItems} location={location} />}
+          </>
+        )}
       </SidebarContent>
     </Sidebar>
   );

@@ -18,7 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/generated_images/Cooling_solutions_company_logo_f0d02c59.png";
 import NotificationPanel from "@/components/NotificationPanel";
-import type { Notification } from "@shared/schema";
+import type { Notification, Company } from "@shared/schema";
 
 export default function TopNavigation() {
   const { user, logout } = useAuth();
@@ -27,6 +27,13 @@ export default function TopNavigation() {
   const userId = user?.id || "demo-user-id";
   const userName = user?.username || "Guest";
   const userRole = user?.role || "staff";
+
+  const { data: company } = useQuery<Company>({
+    queryKey: ["/api/company/me"],
+    enabled: !!user && user.role !== "super_admin",
+    retry: false,
+  });
+  const companyName = company?.name || "CoolDesk";
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('theme');
     return saved === 'dark';
@@ -83,7 +90,7 @@ export default function TopNavigation() {
         <SidebarTrigger data-testid="button-sidebar-toggle" />
         <img 
           src={logoUrl} 
-          alt="JCAJ Cooling Solutions Logo" 
+          alt="CoolDesk Logo" 
           className="h-10 w-10 object-contain"
           data-testid="img-company-logo"
         />
@@ -91,8 +98,8 @@ export default function TopNavigation() {
           <h1 className="font-semibold text-lg" data-testid="text-welcome-message">
             Welcome, {userName}
           </h1>
-          <p className="text-sm text-muted-foreground" data-testid="text-current-date">
-            Today is {currentDate}
+          <p className="text-sm text-muted-foreground" data-testid="text-company-name">
+            {companyName} &middot; {currentDate}
           </p>
         </div>
       </div>

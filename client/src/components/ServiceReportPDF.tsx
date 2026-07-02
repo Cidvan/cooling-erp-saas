@@ -110,15 +110,16 @@ interface ServiceReportPDFProps {
   lineItems?: ServiceLineItem[];
   technicians?: ServiceTechnician[];
   acUnits?: ServiceAcUnit[];
+  companyName?: string;
 }
 
-export function ServiceReportPDFDocument({ serviceReport, client, lineItems = [], technicians = [], acUnits = [] }: ServiceReportPDFProps) {
+export function ServiceReportPDFDocument({ serviceReport, client, lineItems = [], technicians = [], acUnits = [], companyName }: ServiceReportPDFProps) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.companyName}>JCAJ COOLING SOLUTIONS</Text>
+          <Text style={styles.companyName}>{(companyName || "CoolDesk").toUpperCase()}</Text>
           <Text style={styles.companyTagline}>Professional Air Conditioning Services</Text>
           <Text style={styles.documentTitle}>SERVICE REPORT</Text>
         </View>
@@ -288,7 +289,7 @@ export function ServiceReportPDFDocument({ serviceReport, client, lineItems = []
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text>This is an official service report from JCAJ Cooling Solutions</Text>
+          <Text>This is an official service report from {companyName || "CoolDesk"}</Text>
           <Text style={{ marginTop: 2 }}>
             Generated on {format(new Date(), 'MMMM dd, yyyy - hh:mm a')}
           </Text>

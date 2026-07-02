@@ -6,7 +6,7 @@ import { ArrowLeft, Download } from "lucide-react";
 import { useLocation } from "wouter";
 import { ServiceReportPDFDocument } from "@/components/ServiceReportPDF";
 import { pdf } from '@react-pdf/renderer';
-import type { ServiceReport, Client, ServiceLineItem, ServiceTechnician, ServiceAcUnit } from "@shared/schema";
+import type { ServiceReport, Client, ServiceLineItem, ServiceTechnician, ServiceAcUnit, Company } from "@shared/schema";
 
 export default function ServiceReportPDFPreview() {
   const [, params] = useRoute("/service-reports/pdf-preview/:reportNumber");
@@ -28,6 +28,12 @@ export default function ServiceReportPDFPreview() {
 
   const serviceReport = serviceReports.find(sr => sr.reportNumber === reportNumber);
   const client = serviceReport ? clients.find(c => c.id === serviceReport.clientId) : undefined;
+
+  const { data: company } = useQuery<Company>({
+    queryKey: ["/api/company/me"],
+    retry: false,
+  });
+  const companyName = company?.name;
 
   const { data: lineItems = [], isLoading: isLoadingLineItems, isSuccess: isSuccessLineItems } = useQuery<ServiceLineItem[]>({
     queryKey: ["/api/service-reports", serviceReport?.id, "line-items"],
@@ -87,6 +93,7 @@ export default function ServiceReportPDFPreview() {
             lineItems={lineItems}
             technicians={technicians}
             acUnits={acUnits}
+            companyName={companyName}
           />
         ).toBlob();
 
@@ -130,7 +137,7 @@ export default function ServiceReportPDFPreview() {
         currentUrlRef.current = null;
       }
     };
-  }, [serviceReport, client, lineItems, technicians, acUnits, hasServiceReport, allQueriesSuccessful, retryTrigger]);
+  }, [serviceReport, client, lineItems, technicians, acUnits, hasServiceReport, allQueriesSuccessful, retryTrigger, companyName]);
 
   const handleDownload = async () => {
     if (!serviceReport || !client) return;
@@ -142,6 +149,7 @@ export default function ServiceReportPDFPreview() {
         lineItems={lineItems}
         technicians={technicians}
         acUnits={acUnits}
+        companyName={companyName}
       />
     ).toBlob();
 

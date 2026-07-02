@@ -1,0 +1,1 @@
+- [Multi-tenant CoolDesk architecture](multi-tenant-cooldesk.md) — companyId scoping model, super_admin bootstrap script, no seeded demo users.

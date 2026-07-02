@@ -23,6 +23,7 @@ import PurchaseOrders from "@/pages/PurchaseOrders";
 import Documents from "@/pages/Documents";
 import Profile from "@/pages/Profile";
 import PlaceholderPage from "@/pages/PlaceholderPage";
+import SuperAdminCompanies from "@/pages/SuperAdminCompanies";
 import NotFound from "@/pages/not-found";
 import { useEffect } from "react";
 
@@ -30,6 +31,15 @@ import { useEffect } from "react";
 function FinanceRoute({ component: Component }: { component: React.ComponentType }) {
   const { user } = useAuth();
   if (user?.role === "ojt") {
+    return <Redirect to="/dashboard" />;
+  }
+  return <Component />;
+}
+
+// Guard component: only super_admin users may access platform admin routes
+function SuperAdminRoute({ component: Component }: { component: React.ComponentType }) {
+  const { user } = useAuth();
+  if (user?.role !== "super_admin") {
     return <Redirect to="/dashboard" />;
   }
   return <Component />;
@@ -79,6 +89,9 @@ function ProtectedRoutes() {
         />
       </Route>
       <Route path="/profile" component={Profile} />
+      <Route path="/admin/companies">
+        <SuperAdminRoute component={SuperAdminCompanies} />
+      </Route>
       {/* Fallback to dashboard */}
       <Route path="/" component={Dashboard} />
       <Route component={NotFound} />
@@ -102,9 +115,9 @@ function AppRouter() {
       }
     } else {
       // User is authenticated
-      // Redirect to dashboard if on public pages
+      // Redirect to dashboard (or admin console for super admins) if on public pages
       if (location === "/" || location === "/login") {
-        setLocation("/dashboard");
+        setLocation(user.role === "super_admin" ? "/admin/companies" : "/dashboard");
       }
     }
   }, [user, isLoading, location, setLocation]);

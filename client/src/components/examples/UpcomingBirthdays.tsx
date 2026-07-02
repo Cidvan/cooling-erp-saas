@@ -7,7 +7,7 @@ export default function UpcomingBirthdaysExample() {
     {
       id: "1",
       name: "Juan Dela Cruz",
-      company: "JCAJ Company",
+      company: "CoolDesk Company",
       email: "juan@jcaj.com",
       phone: "09923923922",
       address: "123 Business St., Makati City",

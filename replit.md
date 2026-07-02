@@ -1,14 +1,22 @@
-# ERP Dashboard
+# CoolDesk
 
 ## Overview
 
-This ERP dashboard system for JCAJ Cooling Solutions manages clients, service reports, quotations, and financial data. It provides a complete business management solution with real-time analytics, client relationship management, and financial tracking through a professional web interface.
+CoolDesk is a multi-tenant SaaS ERP platform (originally built for JCAJ Cooling Solutions, now generalized) that lets multiple independent companies manage clients, service reports, quotations, and financial data under strict data isolation. It provides a complete business management solution with real-time analytics, client relationship management, and financial tracking through a professional web interface.
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
+
+### Multi-Tenancy
+- **Companies Table**: Top-level `companies` table (name, slug, logo, contact info, status) represents each tenant business.
+- **Data Isolation**: Every business table (clients, service reports, quotations, purchase orders, accounts receivable/payable, sales, expenses, etc.) has a required `companyId` foreign key. All storage-layer queries are scoped by `companyId`, and all API routes enforce tenant scoping via `requireCompany` middleware (reads `companyId` from the session).
+- **Roles**: `super_admin` (platform-level, `companyId` is `null`), `owner`, `admin`, `staff`, `ojt` (all scoped to a single company).
+- **Super Admin Console**: Accessible at `/admin/companies` (gated by `requireSuperAdmin` server-side and a `SuperAdminRoute` guard client-side). Lets platform admins create companies (optionally with an initial owner user) and view all tenants. Super admins are redirected here instead of the regular dashboard after login.
+- **Bootstrapping**: Since no demo/test users are seeded, the very first `super_admin` account must be created via `npx tsx scripts/bootstrap-super-admin.ts <username> <password> [email]`.
+- **Branding**: Authenticated views display the current company's name (fetched from `/api/company/me`), falling back to "CoolDesk" if unset. PDFs (service reports, quotations) also use the company name dynamically, falling back to "CoolDesk".
 
 ### Frontend Architecture
 - **Framework**: React 18 with TypeScript.
@@ -22,7 +30,7 @@ Preferred communication style: Simple, everyday language.
 - **Runtime**: Node.js with Express.js.
 - **Language**: TypeScript.
 - **API Design**: RESTful API structure with `/api` prefix.
-- **Session Management**: Session-based authentication with `connect-pg-simple` for PostgreSQL.
+- **Session Management**: Session-based authentication with `connect-pg-simple` for PostgreSQL. Session stores `userId` and `companyId` (null for super admins).
 
 ### Data Storage Solutions
 - **Database**: PostgreSQL.

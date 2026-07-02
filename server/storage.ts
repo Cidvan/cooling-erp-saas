@@ -1,5 +1,6 @@
 import { 
   type User, type InsertUser, 
+  type Company, type InsertCompany,
   type Client, type InsertClient, 
   type ServiceReport, type InsertServiceReport, 
   type ServiceLineItem, type InsertServiceLineItem, 
@@ -19,6 +20,7 @@ import {
   type Notification, type InsertNotification, 
   type ActivityLog, type InsertActivityLog,
   users,
+  companies,
   clients, 
   serviceReports,
   serviceLineItems,
@@ -42,8 +44,17 @@ import { db } from "./db";
 import { eq, and, sql, desc, inArray } from "drizzle-orm";
 
 export interface IStorage {
+  // Company methods
+  getCompanies(): Promise<Company[]>;
+  getCompany(id: string): Promise<Company | undefined>;
+  getCompanyBySlug(slug: string): Promise<Company | undefined>;
+  createCompany(company: InsertCompany): Promise<Company>;
+  updateCompany(id: string, company: Partial<InsertCompany>): Promise<Company | undefined>;
+  deleteCompany(id: string): Promise<boolean>;
+
   // User methods
   getUsers(): Promise<User[]>;
+  getUsersByCompany(companyId: string): Promise<User[]>;
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
@@ -51,19 +62,19 @@ export interface IStorage {
   updateUserPassword(id: string, newPassword: string): Promise<boolean>;
   
   // Client methods
-  getClients(): Promise<Client[]>;
-  getClient(id: string): Promise<Client | undefined>;
-  createClient(client: InsertClient): Promise<Client>;
-  updateClient(id: string, client: Partial<InsertClient>): Promise<Client | undefined>;
-  deleteClient(id: string): Promise<boolean>;
+  getClients(companyId: string): Promise<Client[]>;
+  getClient(id: string, companyId: string): Promise<Client | undefined>;
+  createClient(companyId: string, client: InsertClient): Promise<Client>;
+  updateClient(id: string, companyId: string, client: Partial<InsertClient>): Promise<Client | undefined>;
+  deleteClient(id: string, companyId: string): Promise<boolean>;
   
   // Service Report methods
-  getServiceReports(): Promise<ServiceReport[]>;
-  getServiceReport(id: string): Promise<ServiceReport | undefined>;
-  getServiceReportsByClientId(clientId: string): Promise<ServiceReport[]>;
-  createServiceReport(report: InsertServiceReport): Promise<ServiceReport>;
-  updateServiceReport(id: string, report: Partial<InsertServiceReport>): Promise<ServiceReport | undefined>;
-  deleteServiceReport(id: string): Promise<boolean>;
+  getServiceReports(companyId: string): Promise<ServiceReport[]>;
+  getServiceReport(id: string, companyId: string): Promise<ServiceReport | undefined>;
+  getServiceReportsByClientId(clientId: string, companyId: string): Promise<ServiceReport[]>;
+  createServiceReport(companyId: string, report: InsertServiceReport): Promise<ServiceReport>;
+  updateServiceReport(id: string, companyId: string, report: Partial<InsertServiceReport>): Promise<ServiceReport | undefined>;
+  deleteServiceReport(id: string, companyId: string): Promise<boolean>;
   
   // Service Line Item methods
   getServiceLineItems(serviceReportId: string): Promise<ServiceLineItem[]>;
@@ -86,12 +97,12 @@ export interface IStorage {
   deleteServiceAcUnitsByReportId(serviceReportId: string): Promise<boolean>;
   
   // Quotation methods
-  getQuotations(): Promise<Quotation[]>;
-  getQuotation(id: string): Promise<Quotation | undefined>;
-  getQuotationsByClientId(clientId: string): Promise<Quotation[]>;
-  createQuotation(quotation: InsertQuotation): Promise<Quotation>;
-  updateQuotation(id: string, quotation: Partial<InsertQuotation>): Promise<Quotation | undefined>;
-  deleteQuotation(id: string): Promise<boolean>;
+  getQuotations(companyId: string): Promise<Quotation[]>;
+  getQuotation(id: string, companyId: string): Promise<Quotation | undefined>;
+  getQuotationsByClientId(clientId: string, companyId: string): Promise<Quotation[]>;
+  createQuotation(companyId: string, quotation: InsertQuotation): Promise<Quotation>;
+  updateQuotation(id: string, companyId: string, quotation: Partial<InsertQuotation>): Promise<Quotation | undefined>;
+  deleteQuotation(id: string, companyId: string): Promise<boolean>;
   
   // Quotation Line Item methods
   getQuotationLineItems(quotationId: string): Promise<QuotationLineItem[]>;
@@ -101,12 +112,12 @@ export interface IStorage {
   deleteQuotationLineItemsByQuotationId(quotationId: string): Promise<boolean>;
   
   // Invoice methods
-  getInvoices(): Promise<Invoice[]>;
-  getInvoice(id: string): Promise<Invoice | undefined>;
-  getInvoicesByClientId(clientId: string): Promise<Invoice[]>;
-  createInvoice(invoice: InsertInvoice): Promise<Invoice>;
-  updateInvoice(id: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined>;
-  deleteInvoice(id: string): Promise<boolean>;
+  getInvoices(companyId: string): Promise<Invoice[]>;
+  getInvoice(id: string, companyId: string): Promise<Invoice | undefined>;
+  getInvoicesByClientId(clientId: string, companyId: string): Promise<Invoice[]>;
+  createInvoice(companyId: string, invoice: InsertInvoice): Promise<Invoice>;
+  updateInvoice(id: string, companyId: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined>;
+  deleteInvoice(id: string, companyId: string): Promise<boolean>;
   
   // Invoice Line Item methods
   getInvoiceLineItems(invoiceId: string): Promise<InvoiceLineItem[]>;
@@ -116,12 +127,12 @@ export interface IStorage {
   deleteInvoiceLineItemsByInvoiceId(invoiceId: string): Promise<boolean>;
   
   // Accounts Receivable methods
-  getAccountsReceivables(): Promise<AccountsReceivable[]>;
-  getAccountsReceivable(id: string): Promise<AccountsReceivable | undefined>;
-  getAccountsReceivablesByClientId(clientId: string): Promise<AccountsReceivable[]>;
-  createAccountsReceivable(ar: InsertAccountsReceivable): Promise<AccountsReceivable>;
-  updateAccountsReceivable(id: string, ar: Partial<InsertAccountsReceivable>): Promise<AccountsReceivable | undefined>;
-  deleteAccountsReceivable(id: string): Promise<boolean>;
+  getAccountsReceivables(companyId: string): Promise<AccountsReceivable[]>;
+  getAccountsReceivable(id: string, companyId: string): Promise<AccountsReceivable | undefined>;
+  getAccountsReceivablesByClientId(clientId: string, companyId: string): Promise<AccountsReceivable[]>;
+  createAccountsReceivable(companyId: string, ar: InsertAccountsReceivable): Promise<AccountsReceivable>;
+  updateAccountsReceivable(id: string, companyId: string, ar: Partial<InsertAccountsReceivable>): Promise<AccountsReceivable | undefined>;
+  deleteAccountsReceivable(id: string, companyId: string): Promise<boolean>;
   
   // AR Payment methods
   getArPayments(arId: string): Promise<ArPayment[]>;
@@ -131,29 +142,29 @@ export interface IStorage {
   deleteArPaymentsByArId(arId: string): Promise<boolean>;
   
   // Operational Expense methods
-  getOperationalExpenses(): Promise<OperationalExpense[]>;
-  getOperationalExpense(id: string): Promise<OperationalExpense | undefined>;
-  createOperationalExpense(expense: InsertOperationalExpense): Promise<OperationalExpense>;
-  updateOperationalExpense(id: string, expense: Partial<InsertOperationalExpense>): Promise<OperationalExpense | undefined>;
-  deleteOperationalExpense(id: string): Promise<boolean>;
+  getOperationalExpenses(companyId: string): Promise<OperationalExpense[]>;
+  getOperationalExpense(id: string, companyId: string): Promise<OperationalExpense | undefined>;
+  createOperationalExpense(companyId: string, expense: InsertOperationalExpense): Promise<OperationalExpense>;
+  updateOperationalExpense(id: string, companyId: string, expense: Partial<InsertOperationalExpense>): Promise<OperationalExpense | undefined>;
+  deleteOperationalExpense(id: string, companyId: string): Promise<boolean>;
   
   // Sales Entry methods
-  getSalesEntries(): Promise<SalesEntry[]>;
-  getSalesEntriesBySource(sourceType: string, sourceId: string): Promise<SalesEntry[]>;
-  getSalesEntry(id: string): Promise<SalesEntry | undefined>;
-  createSalesEntry(entry: InsertSalesEntry): Promise<SalesEntry>;
-  updateSalesEntry(id: string, entry: Partial<InsertSalesEntry>): Promise<SalesEntry | undefined>;
-  deleteSalesEntry(id: string): Promise<boolean>;
+  getSalesEntries(companyId: string): Promise<SalesEntry[]>;
+  getSalesEntriesBySource(sourceType: string, sourceId: string, companyId: string): Promise<SalesEntry[]>;
+  getSalesEntry(id: string, companyId: string): Promise<SalesEntry | undefined>;
+  createSalesEntry(companyId: string, entry: InsertSalesEntry): Promise<SalesEntry>;
+  updateSalesEntry(id: string, companyId: string, entry: Partial<InsertSalesEntry>): Promise<SalesEntry | undefined>;
+  deleteSalesEntry(id: string, companyId: string): Promise<boolean>;
   
   // Purchase Order methods
-  getPurchaseOrders(): Promise<PurchaseOrder[]>;
-  getPurchaseOrder(id: string): Promise<PurchaseOrder | undefined>;
-  createPurchaseOrder(po: InsertPurchaseOrder): Promise<PurchaseOrder>;
-  updatePurchaseOrder(id: string, po: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder | undefined>;
-  deletePurchaseOrder(id: string): Promise<boolean>;
+  getPurchaseOrders(companyId: string): Promise<PurchaseOrder[]>;
+  getPurchaseOrder(id: string, companyId: string): Promise<PurchaseOrder | undefined>;
+  createPurchaseOrder(companyId: string, po: InsertPurchaseOrder): Promise<PurchaseOrder>;
+  updatePurchaseOrder(id: string, companyId: string, po: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder | undefined>;
+  deletePurchaseOrder(id: string, companyId: string): Promise<boolean>;
   
   // Purchase Order Item methods
-  getAllPurchaseOrderItems(): Promise<PurchaseOrderItem[]>;
+  getAllPurchaseOrderItems(companyId: string): Promise<PurchaseOrderItem[]>;
   getPurchaseOrderItems(purchaseOrderId: string): Promise<PurchaseOrderItem[]>;
   createPurchaseOrderItem(item: InsertPurchaseOrderItem): Promise<PurchaseOrderItem>;
   updatePurchaseOrderItem(id: string, item: Partial<InsertPurchaseOrderItem>): Promise<PurchaseOrderItem | undefined>;
@@ -161,31 +172,77 @@ export interface IStorage {
   deletePurchaseOrderItemsByPurchaseOrderId(purchaseOrderId: string): Promise<boolean>;
   
   // Accounts Payable methods
-  getAccountsPayables(): Promise<AccountsPayable[]>;
-  getAccountsPayable(id: string): Promise<AccountsPayable | undefined>;
-  getAccountsPayablesByPurchaseOrderId(purchaseOrderId: string): Promise<AccountsPayable[]>;
-  createAccountsPayable(ap: InsertAccountsPayable): Promise<AccountsPayable>;
-  updateAccountsPayable(id: string, ap: Partial<InsertAccountsPayable>): Promise<AccountsPayable | undefined>;
-  deleteAccountsPayable(id: string): Promise<boolean>;
+  getAccountsPayables(companyId: string): Promise<AccountsPayable[]>;
+  getAccountsPayable(id: string, companyId: string): Promise<AccountsPayable | undefined>;
+  getAccountsPayablesByPurchaseOrderId(purchaseOrderId: string, companyId: string): Promise<AccountsPayable[]>;
+  createAccountsPayable(companyId: string, ap: InsertAccountsPayable): Promise<AccountsPayable>;
+  updateAccountsPayable(id: string, companyId: string, ap: Partial<InsertAccountsPayable>): Promise<AccountsPayable | undefined>;
+  deleteAccountsPayable(id: string, companyId: string): Promise<boolean>;
   
   // Notification methods
-  getNotifications(userId: string): Promise<Notification[]>;
-  getUnreadNotifications(userId: string): Promise<Notification[]>;
-  createNotification(notification: InsertNotification): Promise<Notification>;
+  getNotifications(userId: string, companyId: string): Promise<Notification[]>;
+  getUnreadNotifications(userId: string, companyId: string): Promise<Notification[]>;
+  createNotification(companyId: string, notification: InsertNotification): Promise<Notification>;
   markNotificationAsRead(id: string): Promise<boolean>;
-  markAllNotificationsAsRead(userId: string): Promise<boolean>;
+  markAllNotificationsAsRead(userId: string, companyId: string): Promise<boolean>;
   deleteNotification(id: string): Promise<boolean>;
-  generateNotifications(userId: string): Promise<Notification[]>;
+  generateNotifications(userId: string, companyId: string): Promise<Notification[]>;
   
   // Activity Log methods
-  getActivityLogs(limit?: number): Promise<ActivityLog[]>;
-  createActivityLog(log: InsertActivityLog): Promise<ActivityLog>;
+  getActivityLogs(companyId: string, limit?: number): Promise<ActivityLog[]>;
+  createActivityLog(companyId: string, log: InsertActivityLog): Promise<ActivityLog>;
 }
 
 export class DbStorage implements IStorage {
+  // Company methods
+  async getCompanies(): Promise<Company[]> {
+    return await db.select().from(companies).orderBy(desc(companies.dateCreated));
+  }
+
+  async getCompany(id: string): Promise<Company | undefined> {
+    const result = await db.select().from(companies).where(eq(companies.id, id));
+    return result[0];
+  }
+
+  async getCompanyBySlug(slug: string): Promise<Company | undefined> {
+    const result = await db.select().from(companies).where(eq(companies.slug, slug));
+    return result[0];
+  }
+
+  async createCompany(insertCompany: InsertCompany): Promise<Company> {
+    const [company] = await db.insert(companies).values({
+      ...insertCompany,
+      logoUrl: insertCompany.logoUrl ?? null,
+      address: insertCompany.address ?? null,
+      phone: insertCompany.phone ?? null,
+      email: insertCompany.email ?? null,
+      taxId: insertCompany.taxId ?? null,
+      status: insertCompany.status ?? "active",
+    }).returning();
+    return company;
+  }
+
+  async updateCompany(id: string, updateData: Partial<InsertCompany>): Promise<Company | undefined> {
+    const [updated] = await db
+      .update(companies)
+      .set({ ...updateData, lastModified: new Date() })
+      .where(eq(companies.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCompany(id: string): Promise<boolean> {
+    const result = await db.delete(companies).where(eq(companies.id, id)).returning();
+    return result.length > 0;
+  }
+
   // User methods
   async getUsers(): Promise<User[]> {
     return await db.select().from(users);
+  }
+
+  async getUsersByCompany(companyId: string): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.companyId, companyId));
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -222,19 +279,23 @@ export class DbStorage implements IStorage {
   }
 
   // Client methods
-  async getClients(): Promise<Client[]> {
-    const result = await db.select().from(clients).orderBy(desc(clients.dateCreated));
+  async getClients(companyId: string): Promise<Client[]> {
+    const result = await db.select().from(clients)
+      .where(eq(clients.companyId, companyId))
+      .orderBy(desc(clients.dateCreated));
     return result;
   }
 
-  async getClient(id: string): Promise<Client | undefined> {
-    const result = await db.select().from(clients).where(eq(clients.id, id));
+  async getClient(id: string, companyId: string): Promise<Client | undefined> {
+    const result = await db.select().from(clients)
+      .where(and(eq(clients.id, id), eq(clients.companyId, companyId)));
     return result[0];
   }
 
-  async createClient(insertClient: InsertClient): Promise<Client> {
+  async createClient(companyId: string, insertClient: InsertClient): Promise<Client> {
     const [client] = await db.insert(clients).values({
       ...insertClient,
+      companyId,
       company: insertClient.company ?? null,
       firstTransactionDate: insertClient.firstTransactionDate ?? null,
       lastTransactionDate: insertClient.lastTransactionDate ?? null,
@@ -244,41 +305,46 @@ export class DbStorage implements IStorage {
     return client;
   }
 
-  async updateClient(id: string, updateData: Partial<InsertClient>): Promise<Client | undefined> {
+  async updateClient(id: string, companyId: string, updateData: Partial<InsertClient>): Promise<Client | undefined> {
     const [updated] = await db
       .update(clients)
       .set(updateData)
-      .where(eq(clients.id, id))
+      .where(and(eq(clients.id, id), eq(clients.companyId, companyId)))
       .returning();
     return updated;
   }
 
-  async deleteClient(id: string): Promise<boolean> {
-    const result = await db.delete(clients).where(eq(clients.id, id)).returning();
+  async deleteClient(id: string, companyId: string): Promise<boolean> {
+    const result = await db.delete(clients)
+      .where(and(eq(clients.id, id), eq(clients.companyId, companyId)))
+      .returning();
     return result.length > 0;
   }
 
   // Service Report methods
-  async getServiceReports(): Promise<ServiceReport[]> {
-    const result = await db.select().from(serviceReports).orderBy(desc(serviceReports.dateCreated));
-    return result;
-  }
-
-  async getServiceReport(id: string): Promise<ServiceReport | undefined> {
-    const result = await db.select().from(serviceReports).where(eq(serviceReports.id, id));
-    return result[0];
-  }
-
-  async getServiceReportsByClientId(clientId: string): Promise<ServiceReport[]> {
-    const result = await db
-      .select()
-      .from(serviceReports)
-      .where(eq(serviceReports.clientId, clientId))
+  async getServiceReports(companyId: string): Promise<ServiceReport[]> {
+    const result = await db.select().from(serviceReports)
+      .where(eq(serviceReports.companyId, companyId))
       .orderBy(desc(serviceReports.dateCreated));
     return result;
   }
 
-  async createServiceReport(insertReport: InsertServiceReport): Promise<ServiceReport> {
+  async getServiceReport(id: string, companyId: string): Promise<ServiceReport | undefined> {
+    const result = await db.select().from(serviceReports)
+      .where(and(eq(serviceReports.id, id), eq(serviceReports.companyId, companyId)));
+    return result[0];
+  }
+
+  async getServiceReportsByClientId(clientId: string, companyId: string): Promise<ServiceReport[]> {
+    const result = await db
+      .select()
+      .from(serviceReports)
+      .where(and(eq(serviceReports.clientId, clientId), eq(serviceReports.companyId, companyId)))
+      .orderBy(desc(serviceReports.dateCreated));
+    return result;
+  }
+
+  async createServiceReport(companyId: string, insertReport: InsertServiceReport): Promise<ServiceReport> {
     if (!insertReport.reportNumber) {
       throw new Error("Report number is required");
     }
@@ -295,6 +361,7 @@ export class DbStorage implements IStorage {
     
     const [report] = await db.insert(serviceReports).values({
       ...insertReport,
+      companyId,
       acBrand: insertReport.acBrand ?? null,
       acModel: insertReport.acModel ?? null,
       acSerialNumber: insertReport.acSerialNumber ?? null,
@@ -311,20 +378,22 @@ export class DbStorage implements IStorage {
     return report;
   }
 
-  async updateServiceReport(id: string, updateData: Partial<InsertServiceReport>): Promise<ServiceReport | undefined> {
+  async updateServiceReport(id: string, companyId: string, updateData: Partial<InsertServiceReport>): Promise<ServiceReport | undefined> {
     const [updated] = await db
       .update(serviceReports)
       .set({ ...updateData, lastModified: new Date() })
-      .where(eq(serviceReports.id, id))
+      .where(and(eq(serviceReports.id, id), eq(serviceReports.companyId, companyId)))
       .returning();
     return updated;
   }
 
-  async deleteServiceReport(id: string): Promise<boolean> {
+  async deleteServiceReport(id: string, companyId: string): Promise<boolean> {
     await this.deleteServiceLineItemsByReportId(id);
     await this.deleteServiceTechniciansByReportId(id);
     await this.deleteServiceAcUnitsByReportId(id);
-    const result = await db.delete(serviceReports).where(eq(serviceReports.id, id)).returning();
+    const result = await db.delete(serviceReports)
+      .where(and(eq(serviceReports.id, id), eq(serviceReports.companyId, companyId)))
+      .returning();
     return result.length > 0;
   }
 
@@ -441,31 +510,35 @@ export class DbStorage implements IStorage {
   }
 
   // Quotation methods
-  async getQuotations(): Promise<Quotation[]> {
-    const result = await db.select().from(quotations).orderBy(desc(quotations.dateCreated));
-    return result;
-  }
-
-  async getQuotation(id: string): Promise<Quotation | undefined> {
-    const result = await db.select().from(quotations).where(eq(quotations.id, id));
-    return result[0];
-  }
-
-  async getQuotationsByClientId(clientId: string): Promise<Quotation[]> {
-    const result = await db
-      .select()
-      .from(quotations)
-      .where(eq(quotations.clientId, clientId))
+  async getQuotations(companyId: string): Promise<Quotation[]> {
+    const result = await db.select().from(quotations)
+      .where(eq(quotations.companyId, companyId))
       .orderBy(desc(quotations.dateCreated));
     return result;
   }
 
-  async createQuotation(insertQuotation: InsertQuotation): Promise<Quotation> {
+  async getQuotation(id: string, companyId: string): Promise<Quotation | undefined> {
+    const result = await db.select().from(quotations)
+      .where(and(eq(quotations.id, id), eq(quotations.companyId, companyId)));
+    return result[0];
+  }
+
+  async getQuotationsByClientId(clientId: string, companyId: string): Promise<Quotation[]> {
+    const result = await db
+      .select()
+      .from(quotations)
+      .where(and(eq(quotations.clientId, clientId), eq(quotations.companyId, companyId)))
+      .orderBy(desc(quotations.dateCreated));
+    return result;
+  }
+
+  async createQuotation(companyId: string, insertQuotation: InsertQuotation): Promise<Quotation> {
     const now = new Date();
     const quotationNumber = insertQuotation.quotationNumber || `QUO-${Date.now()}`;
     
     const [quotation] = await db.insert(quotations).values({
       ...insertQuotation,
+      companyId,
       quotationNumber,
       quotationDate: insertQuotation.quotationDate || now,
       validUntil: insertQuotation.validUntil || new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
@@ -481,22 +554,24 @@ export class DbStorage implements IStorage {
     return quotation;
   }
 
-  async updateQuotation(id: string, updateData: Partial<InsertQuotation>): Promise<Quotation | undefined> {
+  async updateQuotation(id: string, companyId: string, updateData: Partial<InsertQuotation>): Promise<Quotation | undefined> {
     const [updated] = await db
       .update(quotations)
       .set({ ...updateData, lastModified: new Date() })
-      .where(eq(quotations.id, id))
+      .where(and(eq(quotations.id, id), eq(quotations.companyId, companyId)))
       .returning();
     return updated;
   }
 
-  async deleteQuotation(id: string): Promise<boolean> {
+  async deleteQuotation(id: string, companyId: string): Promise<boolean> {
     await this.deleteQuotationLineItemsByQuotationId(id);
     // Delete sales entries created when this quotation was accepted
     await db.delete(salesEntries).where(
-      and(eq(salesEntries.sourceType, 'quotation'), eq(salesEntries.sourceId, id))
+      and(eq(salesEntries.sourceType, 'quotation'), eq(salesEntries.sourceId, id), eq(salesEntries.companyId, companyId))
     );
-    const result = await db.delete(quotations).where(eq(quotations.id, id)).returning();
+    const result = await db.delete(quotations)
+      .where(and(eq(quotations.id, id), eq(quotations.companyId, companyId)))
+      .returning();
     return result.length > 0;
   }
 
@@ -539,29 +614,33 @@ export class DbStorage implements IStorage {
   }
 
   // Invoice methods
-  async getInvoices(): Promise<Invoice[]> {
-    const result = await db.select().from(invoices).orderBy(desc(invoices.dateCreated));
-    return result;
-  }
-
-  async getInvoice(id: string): Promise<Invoice | undefined> {
-    const result = await db.select().from(invoices).where(eq(invoices.id, id));
-    return result[0];
-  }
-
-  async getInvoicesByClientId(clientId: string): Promise<Invoice[]> {
-    const result = await db
-      .select()
-      .from(invoices)
-      .where(eq(invoices.clientId, clientId))
+  async getInvoices(companyId: string): Promise<Invoice[]> {
+    const result = await db.select().from(invoices)
+      .where(eq(invoices.companyId, companyId))
       .orderBy(desc(invoices.dateCreated));
     return result;
   }
 
-  async createInvoice(insertInvoice: InsertInvoice): Promise<Invoice> {
+  async getInvoice(id: string, companyId: string): Promise<Invoice | undefined> {
+    const result = await db.select().from(invoices)
+      .where(and(eq(invoices.id, id), eq(invoices.companyId, companyId)));
+    return result[0];
+  }
+
+  async getInvoicesByClientId(clientId: string, companyId: string): Promise<Invoice[]> {
+    const result = await db
+      .select()
+      .from(invoices)
+      .where(and(eq(invoices.clientId, clientId), eq(invoices.companyId, companyId)))
+      .orderBy(desc(invoices.dateCreated));
+    return result;
+  }
+
+  async createInvoice(companyId: string, insertInvoice: InsertInvoice): Promise<Invoice> {
     const now = new Date();
     
     const [invoice] = await db.insert(invoices).values({
+      companyId,
       clientId: insertInvoice.clientId,
       invoiceNumber: insertInvoice.invoiceNumber,
       title: insertInvoice.title || "Invoice",
@@ -579,18 +658,20 @@ export class DbStorage implements IStorage {
     return invoice;
   }
 
-  async updateInvoice(id: string, updateData: Partial<InsertInvoice>): Promise<Invoice | undefined> {
+  async updateInvoice(id: string, companyId: string, updateData: Partial<InsertInvoice>): Promise<Invoice | undefined> {
     const [updated] = await db
       .update(invoices)
       .set({ ...updateData, lastModified: new Date() })
-      .where(eq(invoices.id, id))
+      .where(and(eq(invoices.id, id), eq(invoices.companyId, companyId)))
       .returning();
     return updated;
   }
 
-  async deleteInvoice(id: string): Promise<boolean> {
+  async deleteInvoice(id: string, companyId: string): Promise<boolean> {
     await this.deleteInvoiceLineItemsByInvoiceId(id);
-    const result = await db.delete(invoices).where(eq(invoices.id, id)).returning();
+    const result = await db.delete(invoices)
+      .where(and(eq(invoices.id, id), eq(invoices.companyId, companyId)))
+      .returning();
     return result.length > 0;
   }
 
@@ -633,28 +714,31 @@ export class DbStorage implements IStorage {
   }
 
   // Accounts Receivable methods
-  async getAccountsReceivables(): Promise<AccountsReceivable[]> {
-    const result = await db.select().from(accountsReceivables).orderBy(desc(accountsReceivables.date));
-    return result;
-  }
-
-  async getAccountsReceivable(id: string): Promise<AccountsReceivable | undefined> {
-    const result = await db.select().from(accountsReceivables).where(eq(accountsReceivables.id, id));
-    return result[0];
-  }
-
-  async getAccountsReceivablesByClientId(clientId: string): Promise<AccountsReceivable[]> {
-    const result = await db
-      .select()
-      .from(accountsReceivables)
-      .where(eq(accountsReceivables.clientId, clientId))
+  async getAccountsReceivables(companyId: string): Promise<AccountsReceivable[]> {
+    const result = await db.select().from(accountsReceivables)
+      .where(eq(accountsReceivables.companyId, companyId))
       .orderBy(desc(accountsReceivables.date));
     return result;
   }
 
-  async createAccountsReceivable(insertAR: InsertAccountsReceivable): Promise<AccountsReceivable> {
-    // Generate AR number (AR-001, AR-002, etc.)
-    const existingARs = await db.select().from(accountsReceivables);
+  async getAccountsReceivable(id: string, companyId: string): Promise<AccountsReceivable | undefined> {
+    const result = await db.select().from(accountsReceivables)
+      .where(and(eq(accountsReceivables.id, id), eq(accountsReceivables.companyId, companyId)));
+    return result[0];
+  }
+
+  async getAccountsReceivablesByClientId(clientId: string, companyId: string): Promise<AccountsReceivable[]> {
+    const result = await db
+      .select()
+      .from(accountsReceivables)
+      .where(and(eq(accountsReceivables.clientId, clientId), eq(accountsReceivables.companyId, companyId)))
+      .orderBy(desc(accountsReceivables.date));
+    return result;
+  }
+
+  async createAccountsReceivable(companyId: string, insertAR: InsertAccountsReceivable): Promise<AccountsReceivable> {
+    // Generate AR number (AR-001, AR-002, etc.) scoped per company
+    const existingARs = await db.select().from(accountsReceivables).where(eq(accountsReceivables.companyId, companyId));
     const existingNumbers = existingARs
       .map(ar => ar.arNumber)
       .filter(num => num.startsWith('AR-'))
@@ -666,27 +750,30 @@ export class DbStorage implements IStorage {
     
     const [ar] = await db.insert(accountsReceivables).values({
       ...insertAR,
+      companyId,
       arNumber,
     }).returning();
     return ar;
   }
 
-  async updateAccountsReceivable(id: string, updateData: Partial<InsertAccountsReceivable>): Promise<AccountsReceivable | undefined> {
+  async updateAccountsReceivable(id: string, companyId: string, updateData: Partial<InsertAccountsReceivable>): Promise<AccountsReceivable | undefined> {
     const [updated] = await db
       .update(accountsReceivables)
       .set({ ...updateData, lastModified: new Date() })
-      .where(eq(accountsReceivables.id, id))
+      .where(and(eq(accountsReceivables.id, id), eq(accountsReceivables.companyId, companyId)))
       .returning();
     return updated;
   }
 
-  async deleteAccountsReceivable(id: string): Promise<boolean> {
+  async deleteAccountsReceivable(id: string, companyId: string): Promise<boolean> {
     await this.deleteArPaymentsByArId(id);
     // Delete sales entries created from AR payments
     await db.delete(salesEntries).where(
-      and(eq(salesEntries.sourceType, 'accounts_receivable'), eq(salesEntries.sourceId, id))
+      and(eq(salesEntries.sourceType, 'accounts_receivable'), eq(salesEntries.sourceId, id), eq(salesEntries.companyId, companyId))
     );
-    const result = await db.delete(accountsReceivables).where(eq(accountsReceivables.id, id)).returning();
+    const result = await db.delete(accountsReceivables)
+      .where(and(eq(accountsReceivables.id, id), eq(accountsReceivables.companyId, companyId)))
+      .returning();
     return result.length > 0;
   }
 
@@ -725,19 +812,23 @@ export class DbStorage implements IStorage {
   }
 
   // Operational Expense methods
-  async getOperationalExpenses(): Promise<OperationalExpense[]> {
-    const result = await db.select().from(operationalExpenses).orderBy(desc(operationalExpenses.date));
+  async getOperationalExpenses(companyId: string): Promise<OperationalExpense[]> {
+    const result = await db.select().from(operationalExpenses)
+      .where(eq(operationalExpenses.companyId, companyId))
+      .orderBy(desc(operationalExpenses.date));
     return result;
   }
 
-  async getOperationalExpense(id: string): Promise<OperationalExpense | undefined> {
-    const result = await db.select().from(operationalExpenses).where(eq(operationalExpenses.id, id));
+  async getOperationalExpense(id: string, companyId: string): Promise<OperationalExpense | undefined> {
+    const result = await db.select().from(operationalExpenses)
+      .where(and(eq(operationalExpenses.id, id), eq(operationalExpenses.companyId, companyId)));
     return result[0];
   }
 
-  async createOperationalExpense(insertExpense: InsertOperationalExpense): Promise<OperationalExpense> {
+  async createOperationalExpense(companyId: string, insertExpense: InsertOperationalExpense): Promise<OperationalExpense> {
     const [expense] = await db.insert(operationalExpenses).values({
       ...insertExpense,
+      companyId,
       vendor: insertExpense.vendor ?? null,
       referenceNo: insertExpense.referenceNo ?? null,
       remarks: insertExpense.remarks ?? null,
@@ -745,39 +836,45 @@ export class DbStorage implements IStorage {
     return expense;
   }
 
-  async updateOperationalExpense(id: string, updateData: Partial<InsertOperationalExpense>): Promise<OperationalExpense | undefined> {
+  async updateOperationalExpense(id: string, companyId: string, updateData: Partial<InsertOperationalExpense>): Promise<OperationalExpense | undefined> {
     const [updated] = await db
       .update(operationalExpenses)
       .set(updateData)
-      .where(eq(operationalExpenses.id, id))
+      .where(and(eq(operationalExpenses.id, id), eq(operationalExpenses.companyId, companyId)))
       .returning();
     return updated;
   }
 
-  async deleteOperationalExpense(id: string): Promise<boolean> {
-    const result = await db.delete(operationalExpenses).where(eq(operationalExpenses.id, id)).returning();
+  async deleteOperationalExpense(id: string, companyId: string): Promise<boolean> {
+    const result = await db.delete(operationalExpenses)
+      .where(and(eq(operationalExpenses.id, id), eq(operationalExpenses.companyId, companyId)))
+      .returning();
     return result.length > 0;
   }
 
   // Sales Entry methods
-  async getSalesEntries(): Promise<SalesEntry[]> {
-    const result = await db.select().from(salesEntries).orderBy(desc(salesEntries.date));
+  async getSalesEntries(companyId: string): Promise<SalesEntry[]> {
+    const result = await db.select().from(salesEntries)
+      .where(eq(salesEntries.companyId, companyId))
+      .orderBy(desc(salesEntries.date));
     return result;
   }
 
-  async getSalesEntriesBySource(sourceType: string, sourceId: string): Promise<SalesEntry[]> {
+  async getSalesEntriesBySource(sourceType: string, sourceId: string, companyId: string): Promise<SalesEntry[]> {
     return await db.select().from(salesEntries)
-      .where(and(eq(salesEntries.sourceType, sourceType), eq(salesEntries.sourceId, sourceId)));
+      .where(and(eq(salesEntries.sourceType, sourceType), eq(salesEntries.sourceId, sourceId), eq(salesEntries.companyId, companyId)));
   }
 
-  async getSalesEntry(id: string): Promise<SalesEntry | undefined> {
-    const result = await db.select().from(salesEntries).where(eq(salesEntries.id, id));
+  async getSalesEntry(id: string, companyId: string): Promise<SalesEntry | undefined> {
+    const result = await db.select().from(salesEntries)
+      .where(and(eq(salesEntries.id, id), eq(salesEntries.companyId, companyId)));
     return result[0];
   }
 
-  async createSalesEntry(insertEntry: InsertSalesEntry): Promise<SalesEntry> {
+  async createSalesEntry(companyId: string, insertEntry: InsertSalesEntry): Promise<SalesEntry> {
     const [entry] = await db.insert(salesEntries).values({
       ...insertEntry,
+      companyId,
       sourceType: insertEntry.sourceType ?? null,
       sourceId: insertEntry.sourceId ?? null,
       remarks: insertEntry.remarks ?? null,
@@ -785,34 +882,39 @@ export class DbStorage implements IStorage {
     return entry;
   }
 
-  async updateSalesEntry(id: string, updateData: Partial<InsertSalesEntry>): Promise<SalesEntry | undefined> {
+  async updateSalesEntry(id: string, companyId: string, updateData: Partial<InsertSalesEntry>): Promise<SalesEntry | undefined> {
     const [updated] = await db
       .update(salesEntries)
       .set(updateData)
-      .where(eq(salesEntries.id, id))
+      .where(and(eq(salesEntries.id, id), eq(salesEntries.companyId, companyId)))
       .returning();
     return updated;
   }
 
-  async deleteSalesEntry(id: string): Promise<boolean> {
-    const result = await db.delete(salesEntries).where(eq(salesEntries.id, id)).returning();
+  async deleteSalesEntry(id: string, companyId: string): Promise<boolean> {
+    const result = await db.delete(salesEntries)
+      .where(and(eq(salesEntries.id, id), eq(salesEntries.companyId, companyId)))
+      .returning();
     return result.length > 0;
   }
 
   // Purchase Order methods
-  async getPurchaseOrders(): Promise<PurchaseOrder[]> {
-    const result = await db.select().from(purchaseOrders).orderBy(desc(purchaseOrders.date));
+  async getPurchaseOrders(companyId: string): Promise<PurchaseOrder[]> {
+    const result = await db.select().from(purchaseOrders)
+      .where(eq(purchaseOrders.companyId, companyId))
+      .orderBy(desc(purchaseOrders.date));
     return result;
   }
 
-  async getPurchaseOrder(id: string): Promise<PurchaseOrder | undefined> {
-    const result = await db.select().from(purchaseOrders).where(eq(purchaseOrders.id, id));
+  async getPurchaseOrder(id: string, companyId: string): Promise<PurchaseOrder | undefined> {
+    const result = await db.select().from(purchaseOrders)
+      .where(and(eq(purchaseOrders.id, id), eq(purchaseOrders.companyId, companyId)));
     return result[0];
   }
 
-  async createPurchaseOrder(insertPO: InsertPurchaseOrder): Promise<PurchaseOrder> {
-    // Generate PO number (PO-001, PO-002, etc.)
-    const existingPOs = await db.select().from(purchaseOrders);
+  async createPurchaseOrder(companyId: string, insertPO: InsertPurchaseOrder): Promise<PurchaseOrder> {
+    // Generate PO number (PO-001, PO-002, etc.) scoped per company
+    const existingPOs = await db.select().from(purchaseOrders).where(eq(purchaseOrders.companyId, companyId));
     const existingNumbers = existingPOs
       .map(po => po.poNumber)
       .filter(num => num.startsWith('PO-'))
@@ -824,6 +926,7 @@ export class DbStorage implements IStorage {
     
     const [po] = await db.insert(purchaseOrders).values({
       ...insertPO,
+      companyId,
       poNumber,
       attention: insertPO.attention ?? null,
       status: insertPO.status ?? 'draft',
@@ -835,36 +938,52 @@ export class DbStorage implements IStorage {
     return po;
   }
 
-  async updatePurchaseOrder(id: string, updateData: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder | undefined> {
+  async updatePurchaseOrder(id: string, companyId: string, updateData: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder | undefined> {
     const [updated] = await db
       .update(purchaseOrders)
       .set(updateData)
-      .where(eq(purchaseOrders.id, id))
+      .where(and(eq(purchaseOrders.id, id), eq(purchaseOrders.companyId, companyId)))
       .returning();
     return updated;
   }
 
-  async deletePurchaseOrder(id: string): Promise<boolean> {
+  async deletePurchaseOrder(id: string, companyId: string): Promise<boolean> {
     // Delete operational expenses auto-created when this PO was marked paid
-    const [po] = await db.select().from(purchaseOrders).where(eq(purchaseOrders.id, id));
+    const [po] = await db.select().from(purchaseOrders)
+      .where(and(eq(purchaseOrders.id, id), eq(purchaseOrders.companyId, companyId)));
     if (po?.poNumber) {
       await db.delete(operationalExpenses).where(
-        and(eq(operationalExpenses.referenceNo, po.poNumber), eq(operationalExpenses.category, 'purchase_order'))
+        and(eq(operationalExpenses.referenceNo, po.poNumber), eq(operationalExpenses.category, 'purchase_order'), eq(operationalExpenses.companyId, companyId))
       );
     }
     // Delete linked accounts payables (each cascades to its own expenses)
-    const linkedAPs = await this.getAccountsPayablesByPurchaseOrderId(id);
+    const linkedAPs = await this.getAccountsPayablesByPurchaseOrderId(id, companyId);
     for (const ap of linkedAPs) {
-      await this.deleteAccountsPayable(ap.id);
+      await this.deleteAccountsPayable(ap.id, companyId);
     }
     await this.deletePurchaseOrderItemsByPurchaseOrderId(id);
-    const result = await db.delete(purchaseOrders).where(eq(purchaseOrders.id, id)).returning();
+    const result = await db.delete(purchaseOrders)
+      .where(and(eq(purchaseOrders.id, id), eq(purchaseOrders.companyId, companyId)))
+      .returning();
     return result.length > 0;
   }
 
   // Purchase Order Item methods
-  async getAllPurchaseOrderItems(): Promise<PurchaseOrderItem[]> {
-    const result = await db.select().from(purchaseOrderItems).orderBy(purchaseOrderItems.orderIndex);
+  async getAllPurchaseOrderItems(companyId: string): Promise<PurchaseOrderItem[]> {
+    const result = await db
+      .select({
+        id: purchaseOrderItems.id,
+        purchaseOrderId: purchaseOrderItems.purchaseOrderId,
+        qty: purchaseOrderItems.qty,
+        particulars: purchaseOrderItems.particulars,
+        unitPrice: purchaseOrderItems.unitPrice,
+        amount: purchaseOrderItems.amount,
+        orderIndex: purchaseOrderItems.orderIndex,
+      })
+      .from(purchaseOrderItems)
+      .innerJoin(purchaseOrders, eq(purchaseOrderItems.purchaseOrderId, purchaseOrders.id))
+      .where(eq(purchaseOrders.companyId, companyId))
+      .orderBy(purchaseOrderItems.orderIndex);
     return result;
   }
 
@@ -906,28 +1025,31 @@ export class DbStorage implements IStorage {
   }
 
   // Accounts Payable methods
-  async getAccountsPayables(): Promise<AccountsPayable[]> {
-    const result = await db.select().from(accountsPayables).orderBy(desc(accountsPayables.date));
-    return result;
-  }
-
-  async getAccountsPayable(id: string): Promise<AccountsPayable | undefined> {
-    const result = await db.select().from(accountsPayables).where(eq(accountsPayables.id, id));
-    return result[0];
-  }
-
-  async getAccountsPayablesByPurchaseOrderId(purchaseOrderId: string): Promise<AccountsPayable[]> {
-    const result = await db
-      .select()
-      .from(accountsPayables)
-      .where(eq(accountsPayables.purchaseOrderId, purchaseOrderId))
+  async getAccountsPayables(companyId: string): Promise<AccountsPayable[]> {
+    const result = await db.select().from(accountsPayables)
+      .where(eq(accountsPayables.companyId, companyId))
       .orderBy(desc(accountsPayables.date));
     return result;
   }
 
-  async createAccountsPayable(insertAP: InsertAccountsPayable): Promise<AccountsPayable> {
-    // Generate AP number (AP-001, AP-002, etc.)
-    const existingAPs = await db.select().from(accountsPayables);
+  async getAccountsPayable(id: string, companyId: string): Promise<AccountsPayable | undefined> {
+    const result = await db.select().from(accountsPayables)
+      .where(and(eq(accountsPayables.id, id), eq(accountsPayables.companyId, companyId)));
+    return result[0];
+  }
+
+  async getAccountsPayablesByPurchaseOrderId(purchaseOrderId: string, companyId: string): Promise<AccountsPayable[]> {
+    const result = await db
+      .select()
+      .from(accountsPayables)
+      .where(and(eq(accountsPayables.purchaseOrderId, purchaseOrderId), eq(accountsPayables.companyId, companyId)))
+      .orderBy(desc(accountsPayables.date));
+    return result;
+  }
+
+  async createAccountsPayable(companyId: string, insertAP: InsertAccountsPayable): Promise<AccountsPayable> {
+    // Generate AP number (AP-001, AP-002, etc.) scoped per company
+    const existingAPs = await db.select().from(accountsPayables).where(eq(accountsPayables.companyId, companyId));
     const existingNumbers = existingAPs
       .map(ap => ap.apNumber)
       .filter(num => num.startsWith('AP-'))
@@ -939,53 +1061,60 @@ export class DbStorage implements IStorage {
     
     const [ap] = await db.insert(accountsPayables).values({
       ...insertAP,
+      companyId,
       apNumber,
     }).returning();
     return ap;
   }
 
-  async updateAccountsPayable(id: string, updateData: Partial<InsertAccountsPayable>): Promise<AccountsPayable | undefined> {
+  async updateAccountsPayable(id: string, companyId: string, updateData: Partial<InsertAccountsPayable>): Promise<AccountsPayable | undefined> {
     const [updated] = await db
       .update(accountsPayables)
       .set(updateData)
-      .where(eq(accountsPayables.id, id))
+      .where(and(eq(accountsPayables.id, id), eq(accountsPayables.companyId, companyId)))
       .returning();
     return updated;
   }
 
-  async deleteAccountsPayable(id: string): Promise<boolean> {
+  async deleteAccountsPayable(id: string, companyId: string): Promise<boolean> {
     // Delete operational expenses auto-created when this AP was marked paid
-    const [ap] = await db.select().from(accountsPayables).where(eq(accountsPayables.id, id));
+    const [ap] = await db.select().from(accountsPayables)
+      .where(and(eq(accountsPayables.id, id), eq(accountsPayables.companyId, companyId)));
     if (ap?.apNumber) {
       await db.delete(operationalExpenses).where(
-        and(eq(operationalExpenses.referenceNo, ap.apNumber), eq(operationalExpenses.category, 'accounts_payable'))
+        and(eq(operationalExpenses.referenceNo, ap.apNumber), eq(operationalExpenses.category, 'accounts_payable'), eq(operationalExpenses.companyId, companyId))
       );
     }
-    const result = await db.delete(accountsPayables).where(eq(accountsPayables.id, id)).returning();
+    const result = await db.delete(accountsPayables)
+      .where(and(eq(accountsPayables.id, id), eq(accountsPayables.companyId, companyId)))
+      .returning();
     return result.length > 0;
   }
 
   // Notification methods
-  async getNotifications(userId: string): Promise<Notification[]> {
+  async getNotifications(userId: string, companyId: string): Promise<Notification[]> {
     const result = await db
       .select()
       .from(notifications)
-      .where(eq(notifications.userId, userId))
+      .where(and(eq(notifications.userId, userId), eq(notifications.companyId, companyId)))
       .orderBy(desc(notifications.createdAt));
     return result;
   }
 
-  async getUnreadNotifications(userId: string): Promise<Notification[]> {
+  async getUnreadNotifications(userId: string, companyId: string): Promise<Notification[]> {
     const result = await db
       .select()
       .from(notifications)
-      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)))
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false), eq(notifications.companyId, companyId)))
       .orderBy(desc(notifications.createdAt));
     return result;
   }
 
-  async createNotification(insertNotification: InsertNotification): Promise<Notification> {
-    const [notification] = await db.insert(notifications).values(insertNotification).returning();
+  async createNotification(companyId: string, insertNotification: InsertNotification): Promise<Notification> {
+    const [notification] = await db.insert(notifications).values({
+      ...insertNotification,
+      companyId,
+    }).returning();
     return notification;
   }
 
@@ -998,11 +1127,11 @@ export class DbStorage implements IStorage {
     return result.length > 0;
   }
 
-  async markAllNotificationsAsRead(userId: string): Promise<boolean> {
+  async markAllNotificationsAsRead(userId: string, companyId: string): Promise<boolean> {
     await db
       .update(notifications)
       .set({ isRead: true })
-      .where(eq(notifications.userId, userId));
+      .where(and(eq(notifications.userId, userId), eq(notifications.companyId, companyId)));
     return true;
   }
 
@@ -1011,20 +1140,20 @@ export class DbStorage implements IStorage {
     return result.length > 0;
   }
 
-  async generateNotifications(userId: string): Promise<Notification[]> {
+  async generateNotifications(userId: string, companyId: string): Promise<Notification[]> {
     const newNotifications: Notification[] = [];
     const now = new Date();
     
-    // Get all clients from database
-    const allClients = await db.select().from(clients);
+    // Get all clients for this company
+    const allClients = await db.select().from(clients).where(eq(clients.companyId, companyId));
     
     // Client loop retained for future per-client notifications
     for (const client of allClients) {
       void client; // no per-client notifications currently active
     }
     
-    // Get all accounts receivables from database
-    const allReceivables = await db.select().from(accountsReceivables);
+    // Get all accounts receivables for this company
+    const allReceivables = await db.select().from(accountsReceivables).where(eq(accountsReceivables.companyId, companyId));
     const agingThresholds = [15, 30, 45, 60, 90]; // days
     
     for (const ar of allReceivables) {
@@ -1037,7 +1166,7 @@ export class DbStorage implements IStorage {
       for (const threshold of agingThresholds) {
         if (daysSince === threshold) {
           // Check if we already have a notification for this AR at this threshold
-          const existingNotifications = await this.getNotifications(userId);
+          const existingNotifications = await this.getNotifications(userId, companyId);
           const alreadyNotified = existingNotifications.some(n => 
             n.type === 'receivable_aging' && 
             n.relatedId === ar.id &&
@@ -1050,7 +1179,7 @@ export class DbStorage implements IStorage {
             const client = clientResult[0];
             const clientName = client?.name || 'Unknown Client';
             
-            const notification = await this.createNotification({
+            const notification = await this.createNotification(companyId, {
               userId,
               type: 'receivable_aging',
               title: 'Aging Receivable Alert',
@@ -1070,17 +1199,21 @@ export class DbStorage implements IStorage {
   }
   
   // Activity Log methods
-  async getActivityLogs(limit: number = 50): Promise<ActivityLog[]> {
+  async getActivityLogs(companyId: string, limit: number = 50): Promise<ActivityLog[]> {
     const logs = await db
       .select()
       .from(activityLogs)
+      .where(eq(activityLogs.companyId, companyId))
       .orderBy(desc(activityLogs.timestamp))
       .limit(limit);
     return logs;
   }
   
-  async createActivityLog(log: InsertActivityLog): Promise<ActivityLog> {
-    const [createdLog] = await db.insert(activityLogs).values(log).returning();
+  async createActivityLog(companyId: string, log: InsertActivityLog): Promise<ActivityLog> {
+    const [createdLog] = await db.insert(activityLogs).values({
+      ...log,
+      companyId,
+    }).returning();
     return createdLog;
   }
 }
