@@ -98,8 +98,7 @@ export default function CalendarPage() {
     } else if (event.entityType === "accounts_receivable") {
       setLocation(`/accounts-receivables?editArId=${event.entityId}`);
     } else if (event.entityType === "accounts_payable") {
-      const apDate = format(new Date(event.date), "yyyy-MM-dd");
-      setLocation(`/sales-financial/pl-cash-flow?apDate=${apDate}`);
+      setLocation(`/sales-financial/pl-cash-flow?apId=${event.entityId}`);
     }
   };
 

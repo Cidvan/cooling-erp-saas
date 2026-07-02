@@ -1060,10 +1060,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/calendar", async (req, res) => {
     try {
       const companyId = req.session.companyId!;
+      // ojt users cannot see financial routes (see financeGuard below); mirror that
+      // restriction here by excluding AR/AP events instead of fetching them.
+      const canViewFinance = req.session.userRole !== "ojt";
       const [reports, ars, aps, clientList] = await Promise.all([
         storage.getServiceReports(companyId),
-        storage.getAccountsReceivables(companyId),
-        storage.getAccountsPayables(companyId),
+        canViewFinance ? storage.getAccountsReceivables(companyId) : Promise.resolve([]),
+        canViewFinance ? storage.getAccountsPayables(companyId) : Promise.resolve([]),
         storage.getClients(companyId),
       ]);
 

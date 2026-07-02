@@ -68,6 +68,7 @@ export default function PLCashFlow() {
   const [isSalesDialogOpen, setIsSalesDialogOpen] = useState(false);
   const [isPODetailsDialogOpen, setIsPODetailsDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [deepLinkPOId, setDeepLinkPOId] = useState<string | null>(null);
   const [createAsReceivable, setCreateAsReceivable] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [paymentTerms, setPaymentTerms] = useState<string>("");
@@ -425,20 +426,22 @@ export default function PLCashFlow() {
 
   const selectedDatePOs = selectedDate ? getPOsForDate(selectedDate) : [];
 
-  // Auto-open the PO details dialog for a specific date (e.g. deep link from Calendar)
+  // Auto-open the PO details dialog for a specific AP record (e.g. deep link from Calendar)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const apDate = params.get('apDate');
-    if (apDate && !isLoading) {
-      const parsedDate = new Date(`${apDate}T00:00:00`);
-      if (!isNaN(parsedDate.getTime())) {
-        setSelectedMonth(parsedDate);
-        setSelectedDate(parsedDate);
+    const apId = params.get('apId');
+    if (apId && !isLoading) {
+      const ap = accountsPayables.find(a => a.id === apId);
+      if (ap) {
+        const apDate = new Date(ap.date);
+        setSelectedMonth(apDate);
+        setSelectedDate(apDate);
+        setDeepLinkPOId(ap.purchaseOrderId || null);
         setIsPODetailsDialogOpen(true);
       }
       window.history.replaceState({}, '', location.split('?')[0]);
     }
-  }, [isLoading]);
+  }, [isLoading, accountsPayables]);
 
   return (
     <div className="min-h-screen p-6 space-y-6">
@@ -938,7 +941,13 @@ export default function PLCashFlow() {
       </Card>
 
       {/* Purchase Order Details Dialog */}
-      <Dialog open={isPODetailsDialogOpen} onOpenChange={setIsPODetailsDialogOpen}>
+      <Dialog
+        open={isPODetailsDialogOpen}
+        onOpenChange={(open) => {
+          setIsPODetailsDialogOpen(open);
+          if (!open) setDeepLinkPOId(null);
+        }}
+      >
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -947,13 +956,13 @@ export default function PLCashFlow() {
             </DialogTitle>
           </DialogHeader>
           
-          {selectedDatePOs.length === 0 ? (
+          {(deepLinkPOId ? selectedDatePOs.filter(po => po.id === deepLinkPOId) : selectedDatePOs).length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               No purchase orders found for this date
             </div>
           ) : (
             <div className="space-y-6">
-              {selectedDatePOs.map((po) => (
+              {(deepLinkPOId ? selectedDatePOs.filter(po => po.id === deepLinkPOId) : selectedDatePOs).map((po) => (
                 <Card key={po.id} data-testid={`po-card-${po.poNumber}`}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
