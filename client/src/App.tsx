@@ -21,6 +21,7 @@ import AccountsReceivables from "@/pages/AccountsReceivables";
 import PLCashFlow from "@/pages/PLCashFlow";
 import PurchaseOrders from "@/pages/PurchaseOrders";
 import Documents from "@/pages/Documents";
+import FileManager from "@/pages/FileManager";
 import CalendarPage from "@/pages/Calendar";
 import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
@@ -90,6 +91,7 @@ function ProtectedRoutes() {
         <FinanceRoute component={PurchaseOrders} />
       </Route>
       <Route path="/documents" component={Documents} />
+      <Route path="/file-manager" component={FileManager} />
       <Route path="/calendar" component={CalendarPage} />
       <Route path="/notifications" component={NotificationCenter} />
       <Route path="/activity-feed" component={ActivityFeed} />

@@ -20,6 +20,7 @@ import {
   type AccountsPayable, type InsertAccountsPayable, 
   type Notification, type InsertNotification, 
   type ActivityLog, type InsertActivityLog,
+  type Attachment, type InsertAttachment,
   users,
   companies,
   companySettings,
@@ -41,6 +42,7 @@ import {
   accountsPayables, 
   notifications, 
   activityLogs,
+  attachments,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, sql, desc, inArray, gte, lte, isNull, isNotNull } from "drizzle-orm";
@@ -261,6 +263,19 @@ export interface IStorage {
   getActivityLogs(companyId: string, limit?: number): Promise<ActivityLog[]>;
   getActivityLogsFiltered(companyId: string, filters: ActivityLogFilters): Promise<{ logs: ActivityLog[]; total: number }>;
   createActivityLog(companyId: string, log: InsertActivityLog): Promise<ActivityLog>;
+
+  // Attachment methods
+  getAttachments(companyId: string, filters?: AttachmentFilters): Promise<Attachment[]>;
+  getAttachmentsByEntity(companyId: string, entityType: string, entityId: string): Promise<Attachment[]>;
+  getAttachment(companyId: string, id: string): Promise<Attachment | undefined>;
+  findDuplicateAttachment(companyId: string, entityType: string, entityId: string, fileName: string, sizeBytes: number, fileHash?: string): Promise<Attachment | undefined>;
+  createAttachment(companyId: string, attachment: InsertAttachment): Promise<Attachment>;
+  deleteAttachment(companyId: string, id: string): Promise<boolean>;
+}
+
+export interface AttachmentFilters {
+  entityType?: string;
+  entityId?: string;
 }
 
 export interface ActivityLogFilters {
@@ -1599,6 +1614,77 @@ export class DbStorage implements IStorage {
       .offset(offset);
 
     return { logs, total: count };
+  }
+
+  // Attachment methods
+  async getAttachments(companyId: string, filters?: AttachmentFilters): Promise<Attachment[]> {
+    const conditions = [eq(attachments.companyId, companyId)];
+    if (filters?.entityType) conditions.push(eq(attachments.entityType, filters.entityType));
+    if (filters?.entityId) conditions.push(eq(attachments.entityId, filters.entityId));
+
+    return await db
+      .select()
+      .from(attachments)
+      .where(and(...conditions))
+      .orderBy(desc(attachments.dateCreated));
+  }
+
+  async getAttachmentsByEntity(companyId: string, entityType: string, entityId: string): Promise<Attachment[]> {
+    return await db
+      .select()
+      .from(attachments)
+      .where(and(
+        eq(attachments.companyId, companyId),
+        eq(attachments.entityType, entityType),
+        eq(attachments.entityId, entityId),
+      ))
+      .orderBy(desc(attachments.dateCreated));
+  }
+
+  async getAttachment(companyId: string, id: string): Promise<Attachment | undefined> {
+    const [attachment] = await db
+      .select()
+      .from(attachments)
+      .where(and(eq(attachments.companyId, companyId), eq(attachments.id, id)));
+    return attachment;
+  }
+
+  async findDuplicateAttachment(companyId: string, entityType: string, entityId: string, fileName: string, sizeBytes: number, fileHash?: string): Promise<Attachment | undefined> {
+    const conditions = [
+      eq(attachments.companyId, companyId),
+      eq(attachments.entityType, entityType),
+      eq(attachments.entityId, entityId),
+    ];
+
+    if (fileHash) {
+      const [match] = await db
+        .select()
+        .from(attachments)
+        .where(and(...conditions, eq(attachments.fileHash, fileHash)));
+      if (match) return match;
+    }
+
+    const [match] = await db
+      .select()
+      .from(attachments)
+      .where(and(...conditions, eq(attachments.fileName, fileName), eq(attachments.sizeBytes, sizeBytes)));
+    return match;
+  }
+
+  async createAttachment(companyId: string, attachment: InsertAttachment): Promise<Attachment> {
+    const [created] = await db.insert(attachments).values({
+      ...attachment,
+      companyId,
+    }).returning();
+    return created;
+  }
+
+  async deleteAttachment(companyId: string, id: string): Promise<boolean> {
+    const result = await db
+      .delete(attachments)
+      .where(and(eq(attachments.companyId, companyId), eq(attachments.id, id)))
+      .returning();
+    return result.length > 0;
   }
 }
 

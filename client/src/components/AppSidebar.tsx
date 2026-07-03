@@ -23,7 +23,8 @@ import {
   Activity,
   ShieldCheck,
   CalendarDays,
-  Trash2
+  Trash2,
+  Paperclip
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/lib/auth";
@@ -53,6 +54,11 @@ const operationsItems = [
     title: "Documents",
     url: "/documents",
     icon: FolderOpen,
+  },
+  {
+    title: "File Manager",
+    url: "/file-manager",
+    icon: Paperclip,
   },
   {
     title: "Calendar",

@@ -14,6 +14,7 @@ import { Client, ServiceReport, ServiceLineItem, ServiceTechnician, ServiceAcUni
 import { apiRequest } from "@/lib/queryClient";
 import ClientForm from "@/components/ClientForm";
 import { useCurrency } from "@/hooks/use-currency";
+import { AttachmentUploader } from "@/components/AttachmentUploader";
 
 interface ServiceLineItemWithId extends ServiceLineItem {
   tempId: string; // for tracking during editing
@@ -1070,6 +1071,15 @@ export default function ServiceReports() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Before/After Photos */}
+          {isEditing && editReportId && (
+            <AttachmentUploader
+              entityType="service_report"
+              entityId={editReportId}
+              title="Before / After Photos & Attachments"
+            />
+          )}
 
           {/* Action Buttons */}
           <Card data-testid="action-buttons-section">

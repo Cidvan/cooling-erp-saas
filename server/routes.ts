@@ -1,8 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertClientSchema, insertServiceReportSchema, insertServiceLineItemSchema, insertQuotationSchema, insertQuotationLineItemSchema, insertInvoiceSchema, insertInvoiceLineItemSchema, insertAccountsReceivableSchema, insertOperationalExpenseSchema, insertSalesEntrySchema, insertPurchaseOrderSchema, insertPurchaseOrderItemSchema, insertAccountsPayableSchema, updateUserProfileSchema, updatePasswordSchema, insertNotificationSchema, insertCompanySchema, insertCompanySettingsSchema } from "@shared/schema";
+import { insertClientSchema, insertServiceReportSchema, insertServiceLineItemSchema, insertQuotationSchema, insertQuotationLineItemSchema, insertInvoiceSchema, insertInvoiceLineItemSchema, insertAccountsReceivableSchema, insertOperationalExpenseSchema, insertSalesEntrySchema, insertPurchaseOrderSchema, insertPurchaseOrderItemSchema, insertAccountsPayableSchema, updateUserProfileSchema, updatePasswordSchema, insertNotificationSchema, insertCompanySchema, insertCompanySettingsSchema, insertAttachmentSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
+import { ObjectStorageService, ObjectNotFoundError } from "./replit_integrations/object_storage";
+
+const objectStorageService = new ObjectStorageService();
 
 // Extracts client IP and browser/device info from the request headers for the Audit Trail
 function getRequestContext(req?: any): { ipAddress?: string; userAgent?: string } {
@@ -429,6 +432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/activity-logs", requireCompany);
   app.use("/api/dashboard", requireCompany);
   app.use("/api/calendar", requireCompany);
+  app.use("/api/attachments", requireCompany);
 
   // Client routes
   app.get("/api/clients", async (req, res) => {
@@ -2262,6 +2266,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to permanently delete item" });
+    }
+  });
+
+  // Attachment / File Manager routes
+  app.post("/api/attachments/upload-url", async (req, res) => {
+    try {
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
+      res.json({ uploadURL, objectPath });
+    } catch (error) {
+      console.error("Error generating attachment upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
+  app.get("/api/attachments", async (req, res) => {
+    try {
+      const companyId = req.session.companyId!;
+      const { entityType, entityId } = req.query as { entityType?: string; entityId?: string };
+      const results = await storage.getAttachments(companyId, { entityType, entityId });
+      res.json(results);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch attachments" });
+    }
+  });
+
+  app.get("/api/attachments/entity/:entityType/:entityId", async (req, res) => {
+    try {
+      const companyId = req.session.companyId!;
+      const results = await storage.getAttachmentsByEntity(companyId, req.params.entityType, req.params.entityId);
+      res.json(results);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch attachments" });
+    }
+  });
+
+  app.post("/api/attachments", async (req, res) => {
+    try {
+      const companyId = req.session.companyId!;
+      const validatedData = insertAttachmentSchema.parse(req.body);
+
+      const duplicate = await storage.findDuplicateAttachment(
+        companyId,
+        validatedData.entityType,
+        validatedData.entityId,
+        validatedData.fileName,
+        validatedData.sizeBytes,
+        validatedData.fileHash ?? undefined,
+      );
+      if (duplicate) {
+        return res.status(409).json({
+          error: `A file named "${duplicate.fileName}" already exists on this record`,
+          duplicate,
+        });
+      }
+
+      const attachment = await storage.createAttachment(companyId, {
+        ...validatedData,
+        uploadedBy: req.session.userName || "System",
+      });
+      await logActivity(companyId, 'created', 'attachment', attachment.id, attachment.fileName, `Uploaded file "${attachment.fileName}" to ${attachment.entityType}`, req.session.userId, req.session.userName, req);
+      res.status(201).json(attachment);
+    } catch (error: any) {
+      if (error?.name === "ZodError") {
+        return res.status(400).json({ error: "Invalid attachment data", details: error.errors });
+      }
+      console.error("Error creating attachment:", error);
+      res.status(500).json({ error: "Failed to create attachment" });
+    }
+  });
+
+  app.delete("/api/attachments/:id", async (req, res) => {
+    try {
+      const companyId = req.session.companyId!;
+      const attachment = await storage.getAttachment(companyId, req.params.id);
+      if (!attachment) {
+        return res.status(404).json({ error: "Attachment not found" });
+      }
+      const deleted = await storage.deleteAttachment(companyId, req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Attachment not found" });
+      }
+      await logActivity(companyId, 'deleted', 'attachment', attachment.id, attachment.fileName, `Deleted file "${attachment.fileName}" from ${attachment.entityType}`, req.session.userId, req.session.userName, req);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete attachment" });
+    }
+  });
+
+  // Serves uploaded object storage files (requires an authenticated session)
+  app.get("/objects/:objectPath(*)", requireAuth, async (req, res) => {
+    try {
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      await objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      if (error instanceof ObjectNotFoundError) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      console.error("Error serving object:", error);
+      res.status(500).json({ error: "Failed to serve file" });
     }
   });
 
